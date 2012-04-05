@@ -44,6 +44,24 @@ def get_setting(key, default=None):
     return get_settings().get(key, default)
 
 
+language_regex = re.compile("(?<=source\.)[\w+#]+")
+
+
+def get_language(view):
+    caret = view.sel()[0].a
+    language = language_regex.search(view.scope_name(caret))
+    if language == None:
+        return None
+    return language.group(0)
+
+
+def is_supported_language(view):
+    if view.is_scratch() or not get_setting("sublimejava_enabled", True):
+        return False
+    language = get_language(view)
+    return language == "java"
+
+
 class SublimeJava(sublime_plugin.EventListener):
 
     def find_type_of_variable(self, data, variable):
@@ -103,6 +121,8 @@ class SublimeJava(sublime_plugin.EventListener):
         return stdout.strip()
 
     def on_query_completions(self, view, prefix, locations):
+        if not is_supported_language(view):
+            return []
         line = view.substr(sublime.Region(view.full_line(locations[0]).begin(), locations[0]))
         before = line
         if len(prefix) > 0:
