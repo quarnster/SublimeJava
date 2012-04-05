@@ -45,6 +45,7 @@ def get_setting(key, default=None):
 
 
 language_regex = re.compile("(?<=source\.)[\w+#]+")
+member_regex = re.compile("(([a-zA-Z_]+[0-9_]*)|([\)\]])+)(\.)$")
 
 
 def get_language(view):
@@ -60,6 +61,19 @@ def is_supported_language(view):
         return False
     language = get_language(view)
     return language == "java"
+
+
+class SublimeJavaDotComplete(sublime_plugin.TextCommand):
+    def run(self, edit):
+        for region in self.view.sel():
+            self.view.insert(edit, region.end(), ".")
+        caret = self.view.sel()[0].begin()
+        line = self.view.substr(sublime.Region(self.view.word(caret-1).a, caret))
+        if member_regex.search(line) != None:
+            sublime.set_timeout(self.delayed_complete, 1)
+
+    def delayed_complete(self):
+        self.view.run_command("auto_complete")
 
 
 class SublimeJava(sublime_plugin.EventListener):
@@ -163,3 +177,7 @@ class SublimeJava(sublime_plugin.EventListener):
 
         print "here"
         return []
+
+    def on_query_context(self, view, key, operator, operand, match_all):
+        if key == "sublimejava.dotcomplete":
+            return get_setting(key.replace(".", "_"), True)
