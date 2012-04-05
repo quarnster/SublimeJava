@@ -27,6 +27,9 @@ import subprocess
 import os.path
 
 
+scriptdir = os.path.dirname(os.path.abspath(__file__))
+
+
 def get_settings():
     return sublime.load_settings("SublimeJava.sublime-settings")
 
@@ -80,7 +83,6 @@ class SublimeJava(sublime_plugin.EventListener):
         return output.strip()
 
     def run_java(self, cmd, stdin=None):
-        scriptdir = os.path.dirname(os.path.abspath(__file__))
         proc = subprocess.Popen(
             cmd,
             cwd=scriptdir,
