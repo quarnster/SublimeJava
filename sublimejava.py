@@ -27,6 +27,20 @@ import subprocess
 import os.path
 
 
+def get_settings():
+    return sublime.load_settings("SublimeJava.sublime-settings")
+
+
+def get_setting(key, default=None):
+    try:
+        s = sublime.active_window().active_view().settings()
+        if s.has(key):
+            return s.get(key)
+    except:
+        pass
+    return get_settings().get(key, default)
+
+
 class SublimeJava(sublime_plugin.EventListener):
 
     def find_type_of_variable(self, data, variable):
@@ -41,7 +55,7 @@ class SublimeJava(sublime_plugin.EventListener):
             return None
 
     def get_cmd(self):
-        return "java -classpath .:/Users/quarnster/android/android-sdk-mac_86/platforms/android-14/android.jar SublimeJava"
+        return "java -classpath .:%s SublimeJava" % get_setting("sublimejava_classpath", ".")
 
     def find_absolute_of_type(self, data, type):
         match = re.search("class %s" % type, data)
