@@ -1,0 +1,48 @@
+=== Description ===
+A plugin that provides an Java code completion view inside of Sublime Text 2.
+
+=== Known issues and feature requests ===
+Please go [[https://github.com/quarnster/SublimeJava/issues?sort=created&direction=desc&state=open|here]] to see the currently known issues and feature request, or to file a new.
+
+=== Prerequisites ===
+  # You need to have java installed on your system and the java binary in your path
+
+=== Installation ===
+    # The easiest way to install this plugin is via the excellent Package Control Plugin
+    ## See http://wbond.net/sublime_packages/package_control#Installation
+    ### Once package control has been installed, bring up the command palette (cmd+shift+P or ctrl+shift+P)
+    ### Type Install and select "Package Control: Install Package"
+    ### Select SublimeJava from the list. Package Control will keep it automatically updated for you
+    ## If you don't want to use package control, you can manually install it
+    ### Go to your packages directory and type:
+    ####        git clone https://github.com/quarnster/SublimeJava SublimeJava
+
+=== Usage ===
+Once installed it'll try to provide reasonable completion suggestions when you trigger autocompletion.
+
+
+=== License ===
+This plugin is using the zlib license
+
+{{{
+Copyright (c) 2012 Fredrik Ehnbom
+
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any damages
+arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
+
+   1. The origin of this software must not be misrepresented; you must not
+   claim that you wrote the original software. If you use this software
+   in a product, an acknowledgment in the product documentation would be
+   appreciated but is not required.
+
+   2. Altered source versions must be plainly marked as such, and must not be
+   misrepresented as being the original software.
+
+   3. This notice may not be removed or altered from any source
+   distribution.
+}}}
