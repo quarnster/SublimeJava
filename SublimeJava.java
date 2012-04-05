@@ -25,6 +25,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Member;
 import java.net.URL;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
 
 public class SublimeJava
 {
@@ -32,6 +35,30 @@ public class SublimeJava
     {
         try
         {
+            if (args[0].equals("-findclass"))
+            {
+                String line = null;
+                try
+                {
+                    BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+                    while ((line = in.readLine()) != null)
+                    {
+                        try
+                        {
+                            Class<?> c = Class.forName(line + "." + args[1]);
+                            System.out.println("" + c.getName());
+                            return;
+                        }
+                        catch (Exception e)
+                        {
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                }
+                return;
+            }
             Class<?> c = Class.forName(args[1]);
             String filter = "";
             if (args.length >= 3)

@@ -40,6 +40,9 @@ class SublimeJava(sublime_plugin.EventListener):
             # Variable not defined in this class...
             return None
 
+    def get_cmd(self):
+        return "java -classpath .:/Users/quarnster/android/android-sdk-mac_86/platforms/android-14/android.jar SublimeJava"
+
     def find_absolute_of_type(self, data, type):
         match = re.search("class %s" % type, data)
         if not match is None:
@@ -52,26 +55,35 @@ class SublimeJava(sublime_plugin.EventListener):
         match = re.search(regex, data)
         if not match is None:
             return "%s.%s" % (match.group(1), type)
-        return type
 
-    def run_java(self, cmd):
+        # Couldn't find the absolute name of this class so try to
+        # see if it's in one of the packages imported as
+        # "import package.*;", or in java.lang
+        #
+        packages = re.findall("[ \t]*import[ \t]+(.*)\.\*;", data)
+        packages.append("java.lang")
+        output = self.run_java("%s -findclass %s" % (self.get_cmd(), type), "\n".join(packages))
+        return output.strip()
+
+    def run_java(self, cmd, stdin=None):
         scriptdir = os.path.dirname(os.path.abspath(__file__))
         proc = subprocess.Popen(
             cmd,
             cwd=scriptdir,
             shell=True,
-            stdout=subprocess.PIPE
+            stdout=subprocess.PIPE,
+            stdin=subprocess.PIPE
             )
-        stdout, stderr = proc.communicate()
+        stdout, stderr = proc.communicate(stdin)
         return stdout
 
     def complete_class(self, absolute_classname, prefix):
-        stdout = self.run_java("java -classpath .:/Users/quarnster/android/android-sdk-mac_86/platforms/android-14/android.jar SublimeJava -complete %s %s" % (absolute_classname, prefix))
+        stdout = self.run_java("%s -complete %s %s" % (self.get_cmd(), absolute_classname, prefix))
         ret = [tuple(line.split(";")) for line in stdout.split("\n")[:-1]]
         return sorted(ret, key=lambda a: a[0])
 
     def get_return_type(self, absolute_classname, prefix):
-        stdout = self.run_java("java -classpath .:/Users/quarnster/android/android-sdk-mac_86/platforms/android-14/android.jar SublimeJava -returntype %s %s" % (absolute_classname, prefix))
+        stdout = self.run_java("%s -returntype %s %s" % (self.get_cmd(), absolute_classname, prefix))
         return stdout.strip()
 
     def on_query_completions(self, view, prefix, locations):
@@ -93,6 +105,7 @@ class SublimeJava(sublime_plugin.EventListener):
             t = self.find_type_of_variable(data, var)
             print "type is %s" % t
             t = self.find_absolute_of_type(data, t)
+
             print "absolute is %s" % (t)
 
             idx = before.find(".")
