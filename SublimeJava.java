@@ -31,7 +31,41 @@ import java.io.InputStreamReader;
 
 public class SublimeJava
 {
-   public static void main(String... args)
+    public static String[] getCompletion(Method m, String filter)
+    {
+        String str = m.getName();
+        if (!str.startsWith(filter))
+            return null;
+        str += "(";
+        String ins = str;
+        int count = 1;
+        for (Class c2 : m.getParameterTypes())
+        {
+            if (count > 1)
+            {
+                str += ", ";
+                ins += ", ";
+            }
+            String n = c2.getName();
+            str += n;
+            ins += "${"+count + ":" + n + "}";
+            count++;
+        }
+        str += ")\t" + m.getReturnType().getName();
+        ins += ")";
+        return new String[] {str, ins};
+    }
+    public static String[] getCompletion(Field f, String filter)
+    {
+        String str = f.getName();
+        if (!str.startsWith(filter))
+            return null;
+
+        String rep = str + "\t" + f.getType().getName();
+        return new String[] {rep, str};
+    }
+
+    public static void main(String... args)
     {
         try
         {
@@ -45,7 +79,7 @@ public class SublimeJava
                     {
                         try
                         {
-                            Class<?> c = Class.forName(line + "." + args[1]);
+                            Class c = Class.forName(line + "." + args[1]);
                             System.out.println("" + c.getName());
                             return;
                         }
@@ -67,39 +101,20 @@ public class SublimeJava
             {
                 for (Field f : c.getFields())
                 {
-                    String str = f.getName();
-                    if (!str.startsWith(filter))
+                    String[] completion = getCompletion(f, filter);
+                    if (completion == null)
                         continue;
-
-                    String rep = str + "\t" + f.getType().getName();
-                    System.out.println(rep + ";" + str);
+                    System.out.println(completion[0] + ";;--;;" + completion[1]);
                 }
                 for (Method m : c.getMethods())
                 {
-                    String str = m.getName();
-                    if (!str.startsWith(filter))
+                    String[] completion = getCompletion(m, filter);
+                    if (completion == null)
                         continue;
-                    str += "(";
-                    String ins = str;
-                    int count = 1;
-                    for (Class c2 : m.getParameterTypes())
-                    {
-                        if (count > 1)
-                        {
-                            str += ", ";
-                            ins += ", ";
-                        }
-                        String n = c2.getName();
-                        str += n;
-                        ins += "${"+count + ":" + n + "}";
-                        count++;
-                    }
-                    str += ")\t" + m.getReturnType().getName();
-                    ins += ")";
-                    System.out.println(str + ";" + ins);
+                    System.out.println(completion[0] + ";;--;;" + completion[1]);
                 }
             }
-            else
+            else if (args[0].equals("-returntype"))
             {
                 for (Field f : c.getFields())
                 {
@@ -116,6 +131,36 @@ public class SublimeJava
                         System.out.println("" + m.getReturnType().getName());
                         return;
                     }
+                }
+            }
+            else if (args[0].equals("-cache"))
+            {
+                String source = "unknown";
+                try
+                {
+                    URL u = c.getResource("/" + c.getName().replace('.', '/') + ".class");
+                    source = u.toString();
+                }
+                catch (Exception e)
+                {
+                }
+                System.out.println(c.getName() + ";;--;;" + source);
+                for (Field f : c.getFields())
+                {
+                    String[] comp = getCompletion(f, "");
+                    System.out.println("0;;--;;" + f.getType().getName() + ";;--;;" +
+                                              f.getModifiers() + ";;--;;" +
+                                              comp[0] + ";;--;;" +
+                                              comp[1]);
+                }
+                for (Method m : c.getMethods())
+                {
+                    String[] comp = getCompletion(m, "");
+                    String st = "1;;--;;" + m.getReturnType().getName() + ";;--;;" + m.getName() + ";;--;;" + m.getModifiers();
+                    System.out.println("1;;--;;" + m.getReturnType().getName() + ";;--;;" +
+                                              m.getModifiers() + ";;--;;" +
+                                              comp[0] + ";;--;;" +
+                                              comp[1]);
                 }
             }
         }
