@@ -48,11 +48,12 @@ def get_setting(key, default=None):
         pass
     return get_settings().get(key, default)
 
+
 def run_java(cmd, stdin=None):
     proc = subprocess.Popen(
-        cmd.split(" "),
+        cmd,
         cwd=scriptdir,
-        shell=False,
+        shell=True,
         stdout=subprocess.PIPE,
         stdin=subprocess.PIPE
         )
@@ -101,6 +102,7 @@ class Cache:
             FOREIGN KEY(returnTypeId) REFERENCES type(id) )""")
         # Cache a few random classes
         startupcache = ["java.lang.String",
+                        "java.lang.System",
                         "java.io.BufferedReader",
                         "java.util.Vector",
                         "java.net.HttpURLConnection",
@@ -273,7 +275,10 @@ class SublimeJava(sublime_plugin.EventListener):
         print regex
         match = re.search(regex, data, re.MULTILINE)
         if not match is None:
-            return match.group(1)
+            match = match.group(1)
+            if match.endswith("[]"):
+                match = match[:-2]
+            return match
         else:
             # Variable not defined in this class...
             return None
@@ -340,11 +345,10 @@ class SublimeJava(sublime_plugin.EventListener):
         elif re.search("\.$", before):
             # Member completion
             data = view.substr(sublime.Region(0, locations[0]))
-            before = re.search("[^ \t]+\.$", before).group(0)
-
-            idx = before.find(".")
-            var = before[:idx].strip()
-            before = before[idx+1:]
+            before = re.search("([^ \t]+)(\.)$", before).group(0)
+            match = re.search("([^.\[]+)(\[\d+\])*(\.)(.*)", before)
+            var = match.group(1)
+            before = match.group(4)
             end = time.time()
             print "var is %s (%f ms) " % (var, (end-start)*1000)
             start = time.time()
@@ -352,7 +356,7 @@ class SublimeJava(sublime_plugin.EventListener):
             end = time.time()
             print "type is %s (%f ms)" % (t, (end-start)*1000)
             if t is None:
-                return []
+                t = var
             start = time.time()
             t = self.find_absolute_of_type(data, t)
             end = time.time()
