@@ -269,7 +269,25 @@ class SublimeJava(sublime_plugin.EventListener):
     def __init__(self):
         self.cache_list = []
 
+    def count_brackets(self, data):
+        even = 0
+        for i in range(len(data)):
+            if data[i] == '{':
+                even += 1
+            elif data[i] == '}':
+                even -= 1
+        return even
+
     def find_type_of_variable(self, data, variable):
+        if variable == "this":
+            data = data[:data.rfind(variable)]
+            idx = data.rfind("class")
+            while idx != -1:
+                count = self.count_brackets(data[idx:])
+                if (count & 1) == 0:
+                    return re.search("class\s*([^\s\{]+)([^\{]*\{)(.*)", data[idx:]).group(1)
+                idx = data.rfind("class", 0, idx)
+            return None
         print variable
         regex = "(\w[^( \t]+)[ \t]+%s[ \t]*(\;|,|\)|=|:).*$" % variable
         print regex
