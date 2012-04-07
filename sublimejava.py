@@ -60,9 +60,14 @@ def run_java(cmd, stdin=None):
     stdout, stderr = proc.communicate(stdin)
     return stdout
 
+javaseparator = run_java("java -classpath . SublimeJava -separator").strip()
+
 
 def get_cmd():
-    return "java -classpath .:%s SublimeJava" % get_setting("sublimejava_classpath", ".")
+    classpath = get_setting("sublimejava_classpath", ["."])
+    classpath.append(".")
+    classpath = javaseparator.join(classpath)
+    return "java -classpath %s SublimeJava" % classpath
 
 
 class Cache:

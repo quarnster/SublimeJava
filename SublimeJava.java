@@ -69,7 +69,12 @@ public class SublimeJava
     {
         try
         {
-            if (args[0].equals("-findclass"))
+            if (args[0].equals("-separator"))
+            {
+                System.out.println(System.getProperty("path.separator"));
+                return;
+            }
+            else if (args[0].equals("-findclass"))
             {
                 String line = null;
                 try
