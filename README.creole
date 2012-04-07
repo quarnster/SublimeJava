@@ -21,6 +21,15 @@ Please go [[https://github.com/quarnster/SublimeJava/issues?sort=created&directi
 === Usage ===
 Once installed it'll try to provide reasonable completion suggestions when you trigger autocompletion.
 
+At the first install, it can take some time to create the database and you might see a SublimeJava
+[[https://github.com/quarnster/SublimeJava/issues/6|window popping up]] as it is caching some classes.
+
+It can also take some time to cache classes the first time they are accessed.
+
+If you find that the cache is out of date, it can be cleared by:
+    # Opening up the command palette (cmd+shift+P or ctrl+shift+P)
+    # Type in SublimeJava
+    # Choose the "SublimeJava: Clear Cache" entry
 
 === License ===
 This plugin is using the zlib license
