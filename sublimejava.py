@@ -342,12 +342,14 @@ class SublimeJava(sublime_plugin.EventListener):
             return sorted(ret, key=lambda a: a[0])
 
     def get_return_type(self, absolute_classname, prefix):
+        ret = ""
         if enableCache and cache.is_ready():
-            return cache.get_return_type(absolute_classname, prefix)
+            ret = cache.get_return_type(absolute_classname, prefix)
         else:
             stdout = run_java("%s -returntype %s %s" % (get_cmd(), absolute_classname, prefix))
-
-            return stdout.strip()
+            ret = stdout.strip()
+        ret = re.search("(\[L)?([^;]+)", ret).group(2)
+        return ret
 
     def on_query_completions(self, view, prefix, locations):
         bs = time.time()
