@@ -353,7 +353,9 @@ class SublimeJava(sublime_plugin.EventListener):
         else:
             stdout = run_java("%s -returntype %s %s" % (get_cmd(), absolute_classname, prefix))
             ret = stdout.strip()
-        ret = re.search("(\[L)?([^;]+)", ret).group(2)
+        match = re.search("(\[L)?([^;]+)", ret)
+        if match:
+            return match.group(2)
         return ret
 
     def on_query_completions(self, view, prefix, locations):
@@ -370,10 +372,15 @@ class SublimeJava(sublime_plugin.EventListener):
         elif re.search("\.$", before):
             # Member completion
             data = view.substr(sublime.Region(0, locations[0]))
-            before = re.search("([^ \t]+)(\.)$", before).group(0)
-            match = re.search("([^.\[]+)(\[\d+\])*(\.)(.*)", before)
-            var = match.group(1)
-            before = match.group(4)
+            while True:
+                before = re.search("([^ \t]+)(\.)$", before).group(0)
+                match = re.search("([^.\[]+)(\[\d+\])*(\.)(.*)", before)
+                var = match.group(1)
+                before = match.group(4)
+                if before.count("(") != before.count(")"):
+                    before = before[before.index("(")+1:]
+                    continue
+                break
             end = time.time()
             print "var is %s (%f ms) " % (var, (end-start)*1000)
             start = time.time()
@@ -394,6 +401,15 @@ class SublimeJava(sublime_plugin.EventListener):
                 idx2 = sub.find("(")
                 if idx2 >= 0:
                     sub = sub[:idx2]
+                    count = 1
+                    for i in range(idx+1, len(before)):
+                        if before[i] == '(':
+                            count += 1
+                        elif before[i] == ')':
+                            count -= 1
+                            if count == 0:
+                                idx = before.find(".", i)
+                                break
 
                 n = self.get_return_type(t, sub)
                 print "%s.%s = %s" % (t, sub, n)
