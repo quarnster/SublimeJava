@@ -403,11 +403,15 @@ class SublimeJava(sublime_plugin.EventListener):
             end = time.time()
             print "type is %s (%f ms)" % (t, (end-start)*1000)
             if t is None:
+                # This is for completing for example "System."
+                # or "String." or other static calls/variables
                 t = var
             start = time.time()
             t = self.find_absolute_of_type(data, t)
             end = time.time()
             print "absolute is %s (%f ms)" % (t, (end-start)*1000)
+            if t == "":
+                return []
 
             start = time.time()
             idx = before.find(".")
