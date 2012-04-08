@@ -81,9 +81,12 @@ class Cache:
         self.cacheCursor = self.cache.cursor()
         self.cacheCursor.execute("PRAGMA table_info(type);")
         if len(self.cacheCursor.fetchall()) != 4:
-            self.cacheCursor.execute("drop table source")
-            self.cacheCursor.execute("drop table type")
-            self.cacheCursor.execute("drop table member")
+            try:
+                self.cacheCursor.execute("drop table source")
+                self.cacheCursor.execute("drop table type")
+                self.cacheCursor.execute("drop table member")
+            except:
+                pass
 
         self.cacheCursor.execute("""create table if not exists source(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
