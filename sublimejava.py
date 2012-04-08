@@ -74,17 +74,17 @@ class Cache:
     def __init__(self):
         self.cache = None
         self.cacheCursor = None
-        self.ready = False
-        self.doThread()
+        self.createDB()
 
-    def doThread(self):
-        t = threading.Thread(target=self.createDB, args=(get_cmd(),))
-        t.start()
-        sublime.status_message("SublimeJava: Creating Cache")
-
-    def createDB(self, cmd):
+    def createDB(self):
         self.cache = sqlite3.connect("%s/cache.db" % scriptdir)
         self.cacheCursor = self.cache.cursor()
+        self.cacheCursor.execute("PRAGMA table_info(type);")
+        if len(self.cacheCursor.fetchall()) != 4:
+            self.cacheCursor.execute("drop table source")
+            self.cacheCursor.execute("drop table type")
+            self.cacheCursor.execute("drop table member")
+
         self.cacheCursor.execute("""create table if not exists source(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
@@ -93,6 +93,7 @@ class Cache:
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
             sourceId INTEGER,
+            lastmodified TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(sourceId) REFERENCES source(id))""")
         self.cacheCursor.execute(
         """create table if not exists member(
@@ -105,41 +106,12 @@ class Cache:
             displayText TEXT,
             FOREIGN KEY(typeId) REFERENCES type(id),
             FOREIGN KEY(returnTypeId) REFERENCES type(id) )""")
-        # Cache a few random classes
-        startupcache = ["java.lang.String",
-                        "java.lang.System",
-                        "java.io.BufferedReader",
-                        "java.util.Vector",
-                        "java.net.HttpURLConnection",
-                        "javax.swing.table.JTableHeader",
-                        "android.opengl.GLSurfaceView",
-                        "javax.microedition.khronos.egl.EGL10",
-                        "android.opengl.GLES20"
-                        ]
-        for item in startupcache:
-            if self.get_typeid(item) == None:
-                self.cache_class(item, cmd)
-        self.cacheCursor.close()
-        self.cache.close()
-        self.cache = None
-        self.cacheCursor = None
-        sublime.set_timeout(self.openDB, 0)
-
-    def openDB(self):
-        self.cache = sqlite3.connect("%s/cache.db" % scriptdir)
-        self.cacheCursor = self.cache.cursor()
-        self.ready = True
 
     def clear(self):
-        if self.ready:
-            self.ready = False
-            self.cacheCursor.close()
-            self.cache.close()
-            os.remove("%s/cache.db" % scriptdir)
-            self.doThread()
-
-    def is_ready(self):
-        return self.ready
+        self.cacheCursor.close()
+        self.cache.close()
+        os.remove("%s/cache.db" % scriptdir)
+        self.createDB()
 
     def get_sourceid(self, sourcename):
         sql = "select id from source where name='%s'" % sourcename
@@ -163,15 +135,21 @@ class Cache:
     def display_status(self):
         sublime.status_message(self.status_text)
 
-    def cache_class(self, absclass, cmd=None):
-        if (self.get_cached_class_exists(absclass)):
+    def cache_class(self, absclass, cmd=None, refresh=False, quick=False):
+        if self.get_cached_class_exists(absclass) and not refresh:
             print "that class already exists!! : %s" % absclass
             return
         if cmd == None:
             cmd = get_cmd()
-        stdout = run_java("%s -cache %s" % (cmd, absclass))
-        lines = stdout.split("\n")[:-1]
+
+        lines = []
+        if not quick:
+            stdout = run_java("%s -cache %s" % (cmd, absclass))
+            lines = stdout.split("\n")[:-1]
         if len(lines) == 0:
+            if refresh:
+                # still can't find this class
+                return
             # couldn't find this class... just insert
             # a dummy entry for it
             sid = self.get_sourceid("unknown")
@@ -184,9 +162,14 @@ class Cache:
         sublime.set_timeout(self.display_status, 0)
 
         sourceid = self.get_sourceid(sourcename)
-        self.cacheCursor.execute("insert into type (name, sourceId) values ('%s', %d)" % (classname, sourceid))
+        if refresh:
+            self.cacheCursor.execute("update type set sourceId=%d where name='%s'" % (sourceid, absclass))
+        else:
+            self.cacheCursor.execute("insert into type (name, sourceId) values ('%s', %d)" % (classname, sourceid))
         self.cache.commit()
         classId = self.get_typeid(classname)
+        if refresh:
+            self.cacheCursor.execute("delete from member where typeId=%d" % classId)
         for line in lines[1:]:
             #print line
             membertype, returnType, flags, displayText, insertionText = line.split(";;--;;")
@@ -194,7 +177,7 @@ class Cache:
             flags = int(flags)
 
             if not self.get_cached_class_exists(returnType):
-                self.cache_class(returnType, cmd)
+                self.cache_class(returnType, cmd, quick=True)
             returnTypeId = self.get_typeid(returnType)
 
             self.cacheCursor.execute("""insert into member (typeId, returnTypeId, field_or_method, flags, insertionText, displayText) values (%d, %d, %d, %d, '%s', '%s')""" % (classId, returnTypeId, membertype, flags, insertionText, displayText))
@@ -209,6 +192,30 @@ class Cache:
         if id == None:
             cache.cache_class(absolute_classname)
             id = self.get_typeid(absolute_classname)
+        else:
+            # Check if this class is out of date
+            unknown_sid = self.get_sourceid("unknown")
+            self.cacheCursor.execute("select sourceId from type where id = '%d'" % id)
+            sid = self.cacheCursor.fetchone()[0]
+            if sid == unknown_sid:
+                # It wasn't in the classpath before, see if it is in the classpath now
+                print "refreshing"
+                self.cache_class(absolute_classname, refresh=True)
+                pass
+            else:
+                self.cacheCursor.execute("select name from source where id = '%d'" % sid)
+                name = self.cacheCursor.fetchone()[0]
+                self.cacheCursor.execute("select strftime('%%s', lastmodified) from type where id = %d" % id)
+                lastmodified = self.cacheCursor.fetchone()[0]
+                match = re.search("(file:)([^!]*)", name)
+                if match:
+                    f = match.group(2)
+                    try:
+                        stat = os.stat(f)
+                        if stat.st_mtime > lastmodified:
+                            self.cache_class()
+                    except:
+                        pass
 
         self.cacheCursor.execute("select displayText, insertionText from member where typeId = %d and insertionText like '%s%%' order by insertionText" % (id, prefix))
         ret = self.cacheCursor.fetchall()
@@ -325,7 +332,7 @@ class SublimeJava(sublime_plugin.EventListener):
         #
         packages = re.findall("[ \t]*import[ \t]+(.*)\.\*;", data)
         packages.append("java.lang")
-        if enableCache and cache.is_ready():
+        if enableCache:
             packages.append("")  # for int, boolean, etc
             for package in packages:
                 classname = package + "." + type
@@ -334,12 +341,12 @@ class SublimeJava(sublime_plugin.EventListener):
 
         # Couldn't find a cached version, invoke java
         output = run_java("%s -findclass %s" % (get_cmd(), type), "\n".join(packages)).strip()
-        if len(output) and enableCache and cache.is_ready():
+        if len(output) and enableCache:
             cache.cache_class(output)
         return output
 
     def complete_class(self, absolute_classname, prefix):
-        if enableCache and cache.is_ready():
+        if enableCache:
             return cache.complete(absolute_classname, prefix)
         else:
             stdout = run_java("%s -complete %s %s" % (get_cmd(), absolute_classname, prefix))
@@ -348,7 +355,7 @@ class SublimeJava(sublime_plugin.EventListener):
 
     def get_return_type(self, absolute_classname, prefix):
         ret = ""
-        if enableCache and cache.is_ready():
+        if enableCache:
             ret = cache.get_return_type(absolute_classname, prefix)
         else:
             stdout = run_java("%s -returntype %s %s" % (get_cmd(), absolute_classname, prefix))
