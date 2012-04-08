@@ -166,7 +166,7 @@ class Cache:
 
         sourceid = self.get_sourceid(sourcename)
         if refresh:
-            self.cacheCursor.execute("update type set sourceId=%d where name='%s'" % (sourceid, absclass))
+            self.cacheCursor.execute("update type set sourceId=%d, lastmodified=CURRENT_TIMESTAMP where name='%s'" % (sourceid, absclass))
         else:
             self.cacheCursor.execute("insert into type (name, sourceId) values ('%s', %d)" % (classname, sourceid))
         self.cache.commit()
@@ -207,7 +207,7 @@ class Cache:
                 self.cacheCursor.execute("select name from source where id = '%d'" % sid)
                 name = self.cacheCursor.fetchone()[0]
                 self.cacheCursor.execute("select strftime('%%s', lastmodified) from type where id = %d" % id)
-                lastmodified = self.cacheCursor.fetchone()[0]
+                lastmodified = int(self.cacheCursor.fetchone()[0])
                 match = re.search("(file:)([^!]*)", name)
                 if match:
                     f = match.group(2)
