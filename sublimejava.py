@@ -202,9 +202,7 @@ class Cache:
             sid = self.cacheCursor.fetchone()[0]
             if sid == unknown_sid:
                 # It wasn't in the classpath before, see if it is in the classpath now
-                print "refreshing"
                 self.cache_class(absolute_classname, refresh=True)
-                pass
             else:
                 self.cacheCursor.execute("select name from source where id = '%d'" % sid)
                 name = self.cacheCursor.fetchone()[0]
@@ -216,7 +214,7 @@ class Cache:
                     try:
                         stat = os.stat(f)
                         if stat.st_mtime > lastmodified:
-                            self.cache_class()
+                            self.cache_class(absolute_classname, refresh=True)
                     except:
                         pass
 
