@@ -318,12 +318,18 @@ class SublimeJava(sublime_plugin.EventListener):
 
     def find_absolute_of_type(self, data, type):
         match = re.search("class %s" % type, data)
+
+        thispackage = re.search("[ \t]*package (.*);", data)
+        if thispackage is None:
+            thispackage = ""
+        else:
+            thispackage = thispackage.group(1)
+
         if not match is None:
             # Class is defined in this file, return package of the file
-            package = re.search("[ \t]*package (.*);", data)
-            if package is None:
+            if len(thispackage) == 0:
                 return type
-            return "%s.%s" % (package.group(1), type)
+            return "%s.%s" % (thispackage, type)
         regex = "[ \t]*import[ \t]+(.*)\.%s" % type
         match = re.search(regex, data)
         if not match is None:
@@ -335,6 +341,7 @@ class SublimeJava(sublime_plugin.EventListener):
         #
         packages = re.findall("[ \t]*import[ \t]+(.*)\.\*;", data)
         packages.append("java.lang")
+        packages.append(thispackage)
         if enableCache:
             packages.append("")  # for int, boolean, etc
             for package in packages:
