@@ -28,7 +28,7 @@ import os.path
 import sqlite3
 import time
 import os
-import threading
+import parsehelp
 
 
 scriptdir = os.path.dirname(os.path.abspath(__file__))
@@ -282,38 +282,6 @@ class SublimeJava(sublime_plugin.EventListener):
     def __init__(self):
         self.cache_list = []
 
-    def count_brackets(self, data):
-        even = 0
-        for i in range(len(data)):
-            if data[i] == '{':
-                even += 1
-            elif data[i] == '}':
-                even -= 1
-        return even
-
-    def find_type_of_variable(self, data, variable):
-        if variable == "this":
-            data = data[:data.rfind(variable)]
-            idx = data.rfind("class")
-            while idx != -1:
-                count = self.count_brackets(data[idx:])
-                if (count & 1) == 0:
-                    return re.search("class\s*([^\s\{]+)([^\{]*\{)(.*)", data[idx:]).group(1)
-                idx = data.rfind("class", 0, idx)
-            return None
-        print variable
-        regex = "(\w[^( \t]+)[ \t]+%s[ \t]*(\;|,|\)|=|:).*$" % variable
-        print regex
-        match = re.search(regex, data, re.MULTILINE)
-        if not match is None:
-            match = match.group(1)
-            if match.endswith("[]"):
-                match = match[:-2]
-            return match
-        else:
-            # Variable not defined in this class...
-            return None
-
     def find_absolute_of_type(self, data, type):
         match = re.search("class %s" % type, data)
 
@@ -387,60 +355,50 @@ class SublimeJava(sublime_plugin.EventListener):
         elif re.search("\.$", before):
             # Member completion
             data = view.substr(sublime.Region(0, locations[0]))
-            while True:
-                before = re.search("([^ \t]+)(\.)$", before).group(0)
-                match = re.search("([^.\[]+)(\[\d+\])*(\.)(.*)", before)
-                var = match.group(1)
-                before = match.group(4)
-                if before.count("(") != before.count(")"):
-                    before = before[before.index("(")+1:]
-                    continue
-                break
-            end = time.time()
-            print "var is %s (%f ms) " % (var, (end-start)*1000)
-            start = time.time()
-            t = self.find_type_of_variable(data, var)
-            end = time.time()
-            print "type is %s (%f ms)" % (t, (end-start)*1000)
-            if t is None:
+            typedef = parsehelp.get_type_definition(data, before)
+            if typedef == None:
+                return []
+            line, column, typename, var, tocomplete = typedef
+
+            if typename is None:
                 # This is for completing for example "System."
                 # or "String." or other static calls/variables
-                t = var
+                typename = var
             start = time.time()
-            t = self.find_absolute_of_type(data, t)
+            typename = self.find_absolute_of_type(data, typename)
             end = time.time()
-            print "absolute is %s (%f ms)" % (t, (end-start)*1000)
-            if t == "":
+            print "absolute is %s (%f ms)" % (typename, (end-start)*1000)
+            if typename == "":
                 return []
 
             start = time.time()
-            idx = before.find(".")
+            idx = tocomplete.find(".")
             while idx != -1:
-                sub = before[:idx]
+                sub = tocomplete[:idx]
                 idx2 = sub.find("(")
                 if idx2 >= 0:
                     sub = sub[:idx2]
                     count = 1
-                    for i in range(idx+1, len(before)):
-                        if before[i] == '(':
+                    for i in range(idx+1, len(tocomplete)):
+                        if tocomplete[i] == '(':
                             count += 1
-                        elif before[i] == ')':
+                        elif tocomplete[i] == ')':
                             count -= 1
                             if count == 0:
-                                idx = before.find(".", i)
+                                idx = tocomplete.find(".", i)
                                 break
 
-                n = self.get_return_type(t, sub)
-                print "%s.%s = %s" % (t, sub, n)
-                t = n
-                before = before[idx+1:]
-                idx = before.find(".")
+                n = self.get_return_type(typename, sub)
+                print "%s.%s = %s" % (typename, sub, n)
+                typename = n
+                tocomplete = tocomplete[idx+1:]
+                idx = tocomplete.find(".")
             end = time.time()
             print "finding what to complete took %f ms" % ((end-start) * 1000)
 
-            print "completing %s.%s" % (t, prefix)
+            print "completing %s.%s" % (typename, prefix)
             start = time.time()
-            ret = self.complete_class(t, prefix)
+            ret = self.complete_class(typename, prefix)
             end = time.time()
             print "completion took %f ms" % ((end-start)*1000)
             be = time.time()
