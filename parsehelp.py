@@ -61,7 +61,7 @@ def extract_completion(before):
 
 
 def get_var_type(data, var):
-    regex = re.compile("(\w[^( \t\{,\[]+)[ \t\[\]]+(%s)[ \t]*(\(|\;|,|\)|=)" % var)
+    regex = re.compile("(\w[^( \t\{,\*\&]+)[ \t\*\&]+(%s)[ \t]*(\(|\;|,|\)|=)" % var)
 
     match = None
     for m in regex.finditer(data, re.MULTILINE):
@@ -93,7 +93,7 @@ def get_var_type(data, var):
 def get_type_definition(data, before):
     start = time.time()
     before = extract_completion(before)
-    match = re.search("([^\.\[]+)[^\.]*(\.)(.*)", before)
+    match = re.search("([^\.\[\-]+)[^\.\-]*(\.|->)(.*)", before)
     var = match.group(1)
     tocomplete = match.group(3)
     end = time.time()
