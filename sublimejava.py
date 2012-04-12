@@ -147,7 +147,7 @@ class Cache:
 
         lines = []
         if not quick:
-            stdout = run_java("%s -cache %s" % (cmd, absclass))
+            stdout = run_java("%s -cache '%s'" % (cmd, absclass))
             lines = stdout.split("\n")[:-1]
         if len(lines) == 0:
             if refresh:
@@ -282,19 +282,28 @@ class SublimeJava(sublime_plugin.EventListener):
     def __init__(self):
         self.cache_list = []
 
-    def find_absolute_of_type(self, data, type):
-        match = re.search("class %s" % type, data)
-
+    def find_absolute_of_type(self, data, full_data, type):
         thispackage = re.search("[ \t]*package (.*);", data)
         if thispackage is None:
             thispackage = ""
         else:
             thispackage = thispackage.group(1)
 
+        match = re.search("class %s" % type, full_data)
         if not match is None:
+            full_data = parsehelp.collapse_brackets(full_data[:match.start()])
+            regex = re.compile("\s*class\s+([^\s{]+)")
+            match = regex.search(full_data)
+            while match != None:
+                type = "%s$%s" % (match.group(1), type)
+                full_data = full_data[:match.start()]
+                match = regex.search(full_data)
+
             # Class is defined in this file, return package of the file
             if len(thispackage) == 0:
                 return type
+            return "%s.%s" % (thispackage, type)
+        elif "$" in type:
             return "%s.%s" % (thispackage, type)
         regex = "[ \t]*import[ \t]+(.*)\.%s" % type
         match = re.search(regex, data)
@@ -355,6 +364,7 @@ class SublimeJava(sublime_plugin.EventListener):
         elif re.search("\.$", before):
             # Member completion
             data = view.substr(sublime.Region(0, locations[0]))
+            full_data = view.substr(sublime.Region(0, view.size()))
             typedef = parsehelp.get_type_definition(data, before)
             if typedef == None:
                 return []
@@ -365,7 +375,7 @@ class SublimeJava(sublime_plugin.EventListener):
                 # or "String." or other static calls/variables
                 typename = var
             start = time.time()
-            typename = self.find_absolute_of_type(data, typename)
+            typename = self.find_absolute_of_type(data, full_data, typename)
             end = time.time()
             print "absolute is %s (%f ms)" % (typename, (end-start)*1000)
             if typename == "":

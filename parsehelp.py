@@ -228,6 +228,11 @@ def get_var_type(data, var):
     return match
 
 
+def remove_empty_classes(data):
+    data = sub("\s*class\s+[^\{]+\s*\{\}", data)
+    return data
+
+
 def get_type_definition(data, before):
     start = time.time()
     before = extract_completion(before)
@@ -239,15 +244,20 @@ def get_type_definition(data, before):
 
     start = time.time()
     if var == "this":
-        data = data[:data.rfind(var)]
+        data = collapse_brackets(data[:data.rfind(var)])
+        data = remove_empty_classes(data)
         idx = data.rfind("class")
         match = None
+        ret = ""
         while idx != -1:
-            count = count_brackets(data[idx:])
-            if (count & 1) == 0:
-                match = re.search("class\s*([^\s\{]+)([^\{]*\{)(.*)", data[idx:])
-                break
+            match = re.search("class\s+([^\s\{]+)([^\{]*\{)(.*)", data[idx:])
+            if len(ret):
+                ret = "%s$%s" % (match.group(1), ret)
+            else:
+                ret = match.group(1)
             idx = data.rfind("class", 0, idx)
+        line = column = 0  # TODO
+        return line, column, ret, var, tocomplete
     else:
         match = get_var_type(data, var)
     end = time.time()
