@@ -236,7 +236,7 @@ def remove_empty_classes(data):
 def get_type_definition(data, before):
     start = time.time()
     before = extract_completion(before)
-    match = re.search("([^\.\[\-]+)[^\.\-]*(\.|->)(.*)", before)
+    match = re.search("([^\.\[\-:]+)[^\.\-:]*(\.|->|::)(.*)", before)
     var = match.group(1)
     tocomplete = match.group(3)
     end = time.time()
@@ -258,6 +258,8 @@ def get_type_definition(data, before):
             idx = data.rfind("class", 0, idx)
         line = column = 0  # TODO
         return line, column, ret, var, tocomplete
+    elif match.group(2) == "::":
+        return 0, 0, var, var, tocomplete
     else:
         match = get_var_type(data, var)
     end = time.time()
