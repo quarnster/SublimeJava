@@ -53,7 +53,30 @@ def collapse_brackets(before):
             before = "%s%s" % (before[:i+1], before[end:])
             end = -1
         i -= 1
-    #before = re.sub("[^\{}]+\((?!\))", "", before)
+    return before
+
+
+def collapse_ltgt(before):
+    i = len(before)-1
+    count = 0
+    end = -1
+    while i >= 0:
+        if before[i] == '>':
+            if i > 0 and (before[i-1] == '>' or before[i-1] == '-'):
+                i -= 1
+            else:
+                count += 1
+                if end == -1:
+                    end = i
+        elif before[i] == '<':
+            if i > 0 and before[i-1] == '<':
+                i -= 1
+            else:
+                count -= 1
+                if count == 0 and end != -1:
+                    before = "%s%s" % (before[:i+1], before[end:])
+                    end = -1
+        i -= 1
     return before
 
 
@@ -82,7 +105,7 @@ def extract_completion(before):
     before = before[m.start(1):m.end(2)]
     return before
 
-_keywords = ["return", "new", "delete", "class", "define", "using", "void", "template", "public:", "protected:", "private:", "public", "private", "protected"]
+_keywords = ["return", "new", "delete", "class", "define", "using", "void", "template", "public:", "protected:", "private:", "public", "private", "protected", "typename"]
 
 
 def extract_used_namespaces(data):
@@ -182,7 +205,7 @@ def remove_includes(data):
             break
     return data
 
-_invalid = """( \t\{,\*\&\-\+\/;=%\)\.\"!"""
+_invalid = """\(\\s\{,\*\&\-\+\/;=%\)\.\"!"""
 
 
 def extract_variables(data):
@@ -217,14 +240,26 @@ def extract_variables(data):
 
 
 def get_var_type(data, var):
-    regex = re.compile("(\w[^%s]+)[ \t\*\&]+(%s)[ \t]*(\(|\;|,|\)|=)" % (_invalid, var))
+    regex = re.compile("\\b([^%s]+)[ \s\*\&]+(%s)\s*(\(|\;|,|\)|=)" % (_invalid, var))
 
+    origdata = data
+    data = collapse_ltgt(data)
     data = collapse_brackets(data)
     match = None
-    for m in regex.finditer(data, re.MULTILINE):
+
+    for m in regex.finditer(data):
         if m.group(1) in _keywords:
             continue
         match = m
+    if match and match.group(1):
+        if match.group(1).endswith(">"):
+            name = match.group(1)[:match.group(1).find("<")]
+            regex = re.compile("\\b(%s<.+>)\\s+(%s)" % (name, var))
+            match = None
+            for m in regex.finditer(origdata):
+                if m.group(1) in _keywords:
+                    continue
+                match = m
     return match
 
 
@@ -270,3 +305,38 @@ def get_type_definition(data, before):
     column = len(data[:match.start(2)].split("\n")[-1])+1
     typename = match.group(1)
     return line, column, typename, var, tocomplete
+
+
+def template_split(data):
+    if data == None:
+        return None
+    ret = []
+    comma = data.find(",")
+    pos = 0
+    start = 0
+    while comma != -1:
+        idx1 = data.find("<", pos)
+        idx2 = data.find(">", pos)
+        if (idx1 < comma and comma > idx2) or (idx1 > comma and comma < idx2):
+            ret.append(data[start:comma].strip())
+            pos = comma+1
+            start = pos+1
+        else:
+            pos = comma+1
+
+        comma = data.find(",", pos)
+    ret.append(data[start:].strip())
+    return ret
+
+
+def solve_template(typename):
+    args = []
+    template = re.search("([^<]+)(<(.+)>)?", typename)
+    args = template_split(template.group(3))
+    if args:
+        for i in range(len(args)):
+            if "<" in args[i]:
+                args[i] = solve_template(args[i])
+            else:
+                args[i] = (args[i], None)
+    return template.group(1), args

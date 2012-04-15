@@ -375,6 +375,7 @@ class SublimeJava(sublime_plugin.EventListener):
                 # or "String." or other static calls/variables
                 typename = var
             start = time.time()
+            typename = re.sub("(<.*>)|(\[.*\])", "", typename)
             typename = self.find_absolute_of_type(data, full_data, typename)
             end = time.time()
             print "absolute is %s (%f ms)" % (typename, (end-start)*1000)
