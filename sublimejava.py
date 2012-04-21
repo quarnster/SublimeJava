@@ -25,7 +25,21 @@ import sublime_plugin
 import re
 import subprocess
 import os.path
-import sqlite3
+try:
+    from sqlite3 import connect
+except:
+    try:
+        import platform
+        if platform.architecture()[0] == "64bit":
+            try:
+                import pysqlite64._sqlite
+            except:
+                pass
+            from pysqlite2.dbapi2 import connect
+        else:
+            from pysqlite2.dbapi2 import connect
+    except:
+        sublime.error_message("Unfortunately neither sqlite3 nor pysqlite2 could be imported so SublimeJava will not work")
 import time
 import os
 import parsehelp
@@ -77,7 +91,7 @@ class Cache:
         self.createDB()
 
     def createDB(self):
-        self.cache = sqlite3.connect("%s/cache.db" % scriptdir)
+        self.cache = connect("%s/cache.db" % scriptdir)
         self.cacheCursor = self.cache.cursor()
         self.cacheCursor.execute("PRAGMA table_info(type);")
         if len(self.cacheCursor.fetchall()) != 4:
@@ -109,6 +123,7 @@ class Cache:
             displayText TEXT,
             FOREIGN KEY(typeId) REFERENCES type(id),
             FOREIGN KEY(returnTypeId) REFERENCES type(id) )""")
+        self.cacheCursor.execute("create unique index if not exists classindex on type(name)")
 
     def clear(self):
         self.cacheCursor.close()
@@ -122,7 +137,6 @@ class Cache:
         id = self.cacheCursor.fetchone()
         if id == None:
             self.cacheCursor.execute("insert into source (name) values ('%s')" % sourcename)
-            self.cache.commit()
             self.cacheCursor.execute(sql)
             id = self.cacheCursor.fetchone()
         return id[0]
@@ -147,7 +161,7 @@ class Cache:
 
         lines = []
         if not quick:
-            stdout = run_java("%s -cache '%s'" % (cmd, absclass))
+            stdout = run_java("%s -cache %s" % (cmd, absclass))
             lines = stdout.split("\n")[:-1]
         if len(lines) == 0:
             if refresh:
@@ -157,7 +171,6 @@ class Cache:
             # a dummy entry for it
             sid = self.get_sourceid("unknown")
             self.cacheCursor.execute("""insert into type (name, sourceId) values ('%s', %d)""" % (absclass, sid))
-            self.cache.commit()
             return
         #print lines[0]
         classname, sourcename = lines[0].split(";;--;;")
@@ -169,7 +182,6 @@ class Cache:
             self.cacheCursor.execute("update type set sourceId=%d, lastmodified=CURRENT_TIMESTAMP where name='%s'" % (sourceid, absclass))
         else:
             self.cacheCursor.execute("insert into type (name, sourceId) values ('%s', %d)" % (classname, sourceid))
-        self.cache.commit()
         classId = self.get_typeid(classname)
         if refresh:
             self.cacheCursor.execute("delete from member where typeId=%d" % classId)
@@ -184,7 +196,6 @@ class Cache:
             returnTypeId = self.get_typeid(returnType)
 
             self.cacheCursor.execute("""insert into member (typeId, returnTypeId, field_or_method, flags, insertionText, displayText) values (%d, %d, %d, %d, '%s', '%s')""" % (classId, returnTypeId, membertype, flags, insertionText, displayText))
-            self.cache.commit()
 
     def get_cached_class_exists(self, classname):
         self.cacheCursor.execute("select * from type where name='%s' limit 1" % classname)

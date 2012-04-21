@@ -56,3 +56,8 @@ freely, subject to the following restrictions:
    3. This notice may not be removed or altered from any source
    distribution.
 }}}
+
+In addition to this, since Sublime Text 2 [[http://sublimetext.userecho.com/topic/44995-include-sqlite-again|isn't shipped with the sqlite3 module]]
+the [[http://code.google.com/p/pysqlite/|pysqlite2 module]] using the [[http://www.opensource.org/licenses/mit-license.php|MIT license]] is bundled with the plugin. The 32 bit version was taken from the module's homepage and the 64 bit version from [[http://www.lfd.uci.edu/~gohlke/pythonlibs/#pysqlite|this page]] by Christoph Gohlke.
+
+
