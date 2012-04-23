@@ -262,8 +262,11 @@ member_regex = re.compile("(([a-zA-Z_]+[0-9_]*)|([\)\]])+)(\.)$")
 
 def get_language(view):
     caret = view.sel()[0].a
-    language = language_regex.search(view.scope_name(caret))
+    scope = view.scope_name(caret).strip()
+    language = language_regex.search(scope)
     if language == None:
+        if scope.endswith("jsp"):
+            return "jsp"
         return None
     return language.group(0)
 
@@ -272,7 +275,7 @@ def is_supported_language(view):
     if view.is_scratch() or not get_setting("sublimejava_enabled", True):
         return False
     language = get_language(view)
-    return language == "java"
+    return language == "java" or language == "jsp"
 
 
 class SublimeJavaDotComplete(sublime_plugin.TextCommand):
@@ -433,3 +436,5 @@ class SublimeJava(sublime_plugin.EventListener):
     def on_query_context(self, view, key, operator, operand, match_all):
         if key == "sublimejava.dotcomplete":
             return get_setting(key.replace(".", "_"), True)
+        elif key == "sublimejava.supported_language":
+            return is_supported_language(view)

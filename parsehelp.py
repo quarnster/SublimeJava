@@ -40,6 +40,11 @@ def collapse_brackets(before):
     end = -1
     min = 0
     while i >= 0:
+        a = before.rfind("}", 0, i)
+        b = before.rfind("{", 0, i)
+        i = max(a, b)
+        if i == -1:
+            break
         if before[i] == '}':
             count += 1
             if end == -1:
@@ -52,7 +57,6 @@ def collapse_brackets(before):
         if count == min and end != -1:
             before = "%s%s" % (before[:i+1], before[end:])
             end = -1
-        i -= 1
     return before
 
 
@@ -61,6 +65,11 @@ def collapse_ltgt(before):
     count = 0
     end = -1
     while i >= 0:
+        a = before.rfind(">", 0, i)
+        b = before.rfind("<", 0, i)
+        i = max(a, b)
+        if i == -1:
+            break
         if before[i] == '>':
             if i > 0 and (before[i-1] == '>' or before[i-1] == '-'):
                 i -= 1
@@ -76,7 +85,6 @@ def collapse_ltgt(before):
                 if count == 0 and end != -1:
                     before = "%s%s" % (before[:i+1], before[end:])
                     end = -1
-        i -= 1
     return before
 
 
@@ -85,6 +93,11 @@ def collapse_parenthesis(before):
     count = 0
     end = -1
     while i >= 0:
+        a = before.rfind("(", 0, i)
+        b = before.rfind(")", 0, i)
+        i = max(a, b)
+        if i == -1:
+            break
         if before[i] == ')':
             count += 1
             if end == -1:
@@ -94,8 +107,6 @@ def collapse_parenthesis(before):
             if count == 0 and end != -1:
                 before = "%s%s" % (before[:i+1], before[end:])
                 end = -1
-        i -= 1
-    before = re.sub("[^\(]+\((?!\))", "", before)
     return before
 
 
@@ -141,40 +152,29 @@ def extract_class_from_function(data):
 
 
 def extract_class(data):
+    data = remove_preprocessing(data)
     data = collapse_brackets(data)
     data = remove_classes(data)
-    regex = re.compile("class\s+([^;{\s]+)")
-    match = regex.search(data, re.MULTILINE)
-    if match != None:
-        return match.group(1)
-    return None
+    regex = re.compile("class\s+([^;{\\s]+)\\s*(;|\{)")
+    ret = None
+    for match in regex.finditer(data, re.MULTILINE):
+        ret = match.group(1)
+    return ret
 
 
 def remove_classes(data):
     regex = re.compile("class\s+\S+\s*\{\}\s*;")
-    match = regex.search(data, re.MULTILINE)
-    while match:
-        data = "%s%s" % (data[:match.start()], data[match.end():])
-        match = regex.search(data, re.MULTILINE)
-    return data
+    return regex.sub("", data, re.MULTILINE)
 
 
 def remove_functions(data):
     regex = re.compile("\S+\s*\([^\)]*\)\s*(const)?\s*\{\}")
-    match = regex.search(data, re.MULTILINE)
-    while match:
-        data = "%s%s" % (data[:match.start()], data[match.end():])
-        match = regex.search(data, re.MULTILINE)
-    return data
+    return regex.sub("", data, re.MULTILINE)
 
 
 def remove_namespaces(data):
     regex = re.compile("\s*namespace\s+[^{]+\s*\{\}\s*;")
-    match = regex.search(data, re.MULTILINE)
-    while match:
-        data = "%s%s" % (data[:match.start()], data[match.end():])
-        match = regex.search(data, re.MULTILINE)
-    return data
+    return regex.sub("", data, re.MULTILINE)
 
 
 def sub(exp, data):
@@ -216,7 +216,7 @@ def extract_variables(data):
     data = remove_namespaces(data)
     data = remove_classes(data)
 
-    pattern = "(\\b\\w[^%s]+[ \t\*\&]+(const)?[ \t\*\&]*)(\w[^%s\>]+)[ \t]*(\;|,|\)|=)" % (_invalid, _invalid)
+    pattern = "(\\b\\w[^%s]+[ \t\*\&]+(const)?[ \t\*\&]*)(\w[^%s\[\>]+)[ \t]*(\;|,|\)|=|\[)" % (_invalid, _invalid)
     regex = re.compile(pattern)
     regex2 = re.compile("[^)]+\)+\s+\{")
     ret = []
@@ -277,7 +277,6 @@ def get_type_definition(data, before):
     if match.group(2) == "->":
         tocomplete = "%s%s" % (match.group(2), tocomplete)
     end = time.time()
-    print "var is %s (%f ms) " % (var, (end-start)*1000)
 
     start = time.time()
     if var == "this":
@@ -300,7 +299,6 @@ def get_type_definition(data, before):
     else:
         match = get_var_type(data, var)
     end = time.time()
-    print "type is %s (%f ms)" % ("None" if match == None else match.group(1), (end-start)*1000)
     if match == None:
         return -1, -1, None, var, tocomplete
     line = data[:match.start(2)].count("\n") + 1
@@ -342,3 +340,50 @@ def solve_template(typename):
             else:
                 args[i] = (args[i], None)
     return template.group(1), args
+
+
+def extract_line_until_offset(data, offset):
+    return data[:offset].split("\n")[-1]
+
+
+def extract_line_at_offset(data, offset):
+    line = data[:offset].count("\n")
+    return data.split("\n")[line]
+
+
+def extract_word_at_offset(data, offset):
+    line, column = get_line_and_column_from_offset(data, offset)
+    line = extract_line_at_offset(data, offset)
+    begin = 0
+    end = 0
+    match = re.search("\\b\w*$", line[0:column-1])
+    if match:
+        begin = match.start()
+    match = re.search("^\w*", line[begin:])
+    if match:
+        end = begin+match.end()
+    word = line[begin:end]
+    return word
+
+
+def extract_extended_word_at_offset(data, offset):
+    line, column = get_line_and_column_from_offset(data, offset)
+    line = extract_line_at_offset(data, offset)
+    match = re.search("^\w*", line[column:])
+    if match:
+        column = column + match.end()
+    extword = line[0:column]
+    return extword
+
+
+def get_line_and_column_from_offset(data, offset):
+    data = data[:offset].split("\n")
+    line = len(data)
+    column = len(data[-1])
+    return line, column
+
+
+def get_offset_from_line_and_column(data, line, column):
+    data = data.split("\n")
+    offset = len("\n".join(data[:line-1])) + column
+    return offset

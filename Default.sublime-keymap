@@ -3,7 +3,7 @@
         "keys": ["."], "command": "sublime_java_dot_complete",
         "context":
         [
-            {"key": "selector", "operator": "equal", "operand": "source.java", "match_all": true},
+            {"key": "sublimejava.supported_language"},
             {"key": "sublimejava.dotcomplete"}
         ]
     }
