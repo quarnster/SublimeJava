@@ -396,6 +396,7 @@ class SublimeJava(sublime_plugin.EventListener):
             if typename == "":
                 return []
 
+            tocomplete = tocomplete[1:]  # skip initial .
             start = time.time()
             idx = tocomplete.find(".")
             while idx != -1:
