@@ -15,7 +15,7 @@ Please go [[https://github.com/quarnster/SublimeJava/issues?sort=created&directi
     ### Select SublimeJava from the list. Package Control will keep it automatically updated for you
     ## If you don't want to use package control, you can manually install it
     ### Go to your packages directory and type:
-    ####        git clone https://github.com/quarnster/SublimeJava SublimeJava
+    ####        git clone --recursive https://github.com/quarnster/SublimeJava SublimeJava
     # You most likely want to configure the "sublimejava_classpath" setting to your own
 
 === Usage ===
