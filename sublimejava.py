@@ -42,7 +42,7 @@ except:
         sublime.error_message("Unfortunately neither sqlite3 nor pysqlite2 could be imported so SublimeJava will not work")
 import time
 import os
-import parsehelp
+from parsehelp import parsehelp
 
 
 scriptdir = os.path.dirname(os.path.abspath(__file__))
@@ -161,7 +161,7 @@ class Cache:
 
         lines = []
         if not quick:
-            stdout = run_java("%s -cache %s" % (cmd, absclass))
+            stdout = run_java("%s -cache '%s'" % (cmd, absclass))
             lines = stdout.split("\n")[:-1]
         if len(lines) == 0:
             if refresh:
@@ -206,6 +206,8 @@ class Cache:
         if id == None:
             cache.cache_class(absolute_classname)
             id = self.get_typeid(absolute_classname)
+            if id == None:
+                raise Exception("id is still None!")
         else:
             # Check if this class is out of date
             unknown_sid = self.get_sourceid("unknown")
@@ -342,6 +344,8 @@ class SublimeJava(sublime_plugin.EventListener):
         output = run_java("%s -findclass %s" % (get_cmd(), type), "\n".join(packages)).strip()
         if len(output) and enableCache:
             cache.cache_class(output)
+        if len(output) == 0 and "." in type:
+            return self.find_absolute_of_type(data, full_data, type.replace(".", "$"))
         return output
 
     def complete_class(self, absolute_classname, prefix):
