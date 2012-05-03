@@ -64,6 +64,7 @@ public class SublimeJava
         String rep = str + "\t" + f.getType().getName();
         return new String[] {rep, str};
     }
+    private static final String sep = ";;--;;";
 
     public static void main(String... args)
     {
@@ -109,14 +110,14 @@ public class SublimeJava
                     String[] completion = getCompletion(f, filter);
                     if (completion == null)
                         continue;
-                    System.out.println(completion[0] + ";;--;;" + completion[1]);
+                    System.out.println(completion[0] + sep + completion[1]);
                 }
                 for (Method m : c.getMethods())
                 {
                     String[] completion = getCompletion(m, filter);
                     if (completion == null)
                         continue;
-                    System.out.println(completion[0] + ";;--;;" + completion[1]);
+                    System.out.println(completion[0] + sep + completion[1]);
                 }
             }
             else if (args[0].equals("-returntype"))
@@ -149,23 +150,29 @@ public class SublimeJava
                 catch (Exception e)
                 {
                 }
-                System.out.println(c.getName() + ";;--;;" + source);
+                System.out.println(c.getName() + sep + source);
                 for (Field f : c.getFields())
                 {
                     String[] comp = getCompletion(f, "");
-                    System.out.println("0;;--;;" + f.getType().getName() + ";;--;;" +
-                                              f.getModifiers() + ";;--;;" +
-                                              comp[0] + ";;--;;" +
+                    System.out.println("0" + sep + f.getType().getName() + sep +
+                                              f.getModifiers() + sep +
+                                              comp[0] + sep +
                                               comp[1]);
                 }
                 for (Method m : c.getMethods())
                 {
                     String[] comp = getCompletion(m, "");
-                    String st = "1;;--;;" + m.getReturnType().getName() + ";;--;;" + m.getName() + ";;--;;" + m.getModifiers();
-                    System.out.println("1;;--;;" + m.getReturnType().getName() + ";;--;;" +
-                                              m.getModifiers() + ";;--;;" +
-                                              comp[0] + ";;--;;" +
+                    System.out.println("1" + sep + m.getReturnType().getName() + sep +
+                                              m.getModifiers() + sep +
+                                              comp[0] + sep +
                                               comp[1]);
+                }
+                for (Class clazz : c.getClasses())
+                {
+                    System.out.println("2" + sep + clazz.getName() + sep +
+                                                    clazz.getModifiers() + sep +
+                                                    clazz.getSimpleName() + "\tclass" + sep +
+                                                    clazz.getSimpleName());
                 }
             }
         }
