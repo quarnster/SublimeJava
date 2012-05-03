@@ -307,7 +307,8 @@ class SublimeJava(sublime_plugin.EventListener):
 
         match = re.search("class %s" % type, full_data)
         if not match is None:
-            full_data = parsehelp.collapse_brackets(full_data[:match.start()])
+            # This type is defined in this file so figure out the nesting
+            full_data = parsehelp.remove_preprocessing(parsehelp.collapse_brackets(full_data[:match.start()]))
             regex = re.compile("\s*class\s+([^\s{]+)")
             match = regex.search(full_data)
             while match != None:
