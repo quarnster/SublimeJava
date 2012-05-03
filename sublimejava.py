@@ -317,7 +317,8 @@ class SublimeJava(sublime_plugin.EventListener):
                 else:
                     add = m.group(1)
 
-            type = "%s$%s" % (add, type)
+            if len(add):
+                type = "%s$%s" % (add, type)
             # Class is defined in this file, return package of the file
             if len(thispackage) == 0:
                 return type
