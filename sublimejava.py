@@ -308,21 +308,22 @@ class SublimeJava(sublime_plugin.EventListener):
         match = re.search("class %s" % type, full_data)
         if not match is None:
             # This type is defined in this file so figure out the nesting
-            full_data = parsehelp.remove_preprocessing(parsehelp.collapse_brackets(full_data[:match.start()]))
-            regex = re.compile("\s*class\s+([^\s{]+)")
-            match = regex.search(full_data)
-            while match != None:
-                type = "%s$%s" % (match.group(1), type)
-                full_data = full_data[:match.start()]
-                match = regex.search(full_data)
+            full_data = parsehelp.remove_empty_classes(parsehelp.remove_preprocessing(parsehelp.collapse_brackets(full_data[:match.start()])))
+            regex = re.compile("\s*class\s+([^\\s{]+)")
+            add = ""
+            for m in re.finditer(regex, full_data):
+                if len(add):
+                    add = "%s$%s" % (add, m.group(1))
+                else:
+                    add = m.group(1)
 
+            type = "%s$%s" % (add, type)
             # Class is defined in this file, return package of the file
             if len(thispackage) == 0:
                 return type
             return "%s.%s" % (thispackage, type)
-        elif "$" in type:
-            return "%s.%s" % (thispackage, type)
-        regex = "[ \t]*import[ \t]+(.*)\.%s" % type
+        outer = type.split("$")[0]
+        regex = "[ \t]*import[ \t]+(.*)\.%s" % outer
         match = re.search(regex, data)
         if not match is None:
             return "%s.%s" % (match.group(1), type)
