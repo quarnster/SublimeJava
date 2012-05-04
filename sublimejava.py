@@ -46,7 +46,6 @@ from parsehelp import parsehelp
 
 
 scriptdir = os.path.dirname(os.path.abspath(__file__))
-enableCache = True
 
 
 def get_settings():
@@ -324,48 +323,52 @@ class SublimeJava(sublime_plugin.EventListener):
                 return type
             return "%s.%s" % (thispackage, type)
         outer = type.split("$")[0]
+        outer = outer.split(".")[0]
         regex = "[ \t]*import[ \t]+(.*)\.%s" % outer
         match = re.search(regex, data)
         if not match is None:
-            return "%s.%s" % (match.group(1), type)
+            classname = "%s.%s" % (match.group(1), type)
+            if cache.get_cached_class_exists(classname):
+                return classname
+            # Try and see if it's an inner class then
+            count = 0
+            while "." in classname and count < 10:
+                count += 1
+                classname = "%s$%s" % (classname[:classname.rfind(".")], classname[classname.rfind(".")+1:])
+                print classname
+                if cache.get_cached_class_exists(classname):
+                    return classname
 
         # Couldn't find the absolute name of this class so try to
         # see if it's in one of the packages imported as
         # "import package.*;", or in java.lang
         #
-        packages = re.findall("[ \t]*import[ \t]+(.*)\.\*;", data)
-        packages.append("java.lang")
-        packages.append(thispackage)
-        if enableCache:
-            packages.append("")  # for int, boolean, etc
-            for package in packages:
-                classname = package + "." + type
-                if cache.get_cached_class_exists(classname):
-                    return classname
+        packages = re.findall("[ \t]*import[ \t]+(.*);", data)
+        packages.append("java.lang.*")
+        packages.append(thispackage + ".*")
+        packages.append("")  # for int, boolean, etc
+        for package in packages:
+            classname = type
+            if package.endswith(".*"):
+                classname = package[:-2] + "." + type
+            elif len(package):
+                classname = package + "$" + type
+            if cache.get_cached_class_exists(classname):
+                return classname
 
         # Couldn't find a cached version, invoke java
-        output = run_java("%s -findclass %s" % (get_cmd(), type), "\n".join(packages)).strip()
-        if len(output) and enableCache:
+        output = run_java("%s -findclass '%s'" % (get_cmd(), type), "\n".join(packages)).strip()
+        if len(output):
             cache.cache_class(output)
         if len(output) == 0 and "." in type:
             return self.find_absolute_of_type(data, full_data, type.replace(".", "$"))
         return output
 
     def complete_class(self, absolute_classname, prefix):
-        if enableCache:
-            return cache.complete(absolute_classname, prefix)
-        else:
-            stdout = run_java("%s -complete %s %s" % (get_cmd(), absolute_classname, prefix))
-            ret = [tuple(line.split(";;--;;")) for line in stdout.split("\n")[:-1]]
-            return sorted(ret, key=lambda a: a[0])
+        return cache.complete(absolute_classname, prefix)
 
     def get_return_type(self, absolute_classname, prefix):
-        ret = ""
-        if enableCache:
-            ret = cache.get_return_type(absolute_classname, prefix)
-        else:
-            stdout = run_java("%s -returntype %s %s" % (get_cmd(), absolute_classname, prefix))
-            ret = stdout.strip()
+        ret = cache.get_return_type(absolute_classname, prefix)
         match = re.search("(\[L)?([^;]+)", ret)
         if match:
             return match.group(2)

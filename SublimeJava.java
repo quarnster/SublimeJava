@@ -27,6 +27,7 @@ import java.lang.reflect.Member;
 import java.net.URL;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.*;
 
 
 public class SublimeJava
@@ -66,6 +67,19 @@ public class SublimeJava
     }
     private static final String sep = ";;--;;";
 
+    private static String getClassname(String pack, String clazz)
+    {
+        if (pack.endsWith(".*"))
+        {
+            return pack.substring(0, pack.length()-2) + "." + clazz;
+        }
+        else if (pack.length() != 0)
+        {
+            return pack + "$" + clazz;
+        }
+        return clazz;
+    }
+
     public static void main(String... args)
     {
         try
@@ -78,14 +92,41 @@ public class SublimeJava
             else if (args[0].equals("-findclass"))
             {
                 String line = null;
+                ArrayList<String> packages = new ArrayList<String>();
                 try
                 {
                     BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
                     while ((line = in.readLine()) != null)
                     {
+                        packages.add(line);
+                    }
+                }
+                catch (Exception e)
+                {
+                }
+                for (String pack : packages)
+                {
+                    try
+                    {
+                        Class c = Class.forName(getClassname(pack, args[1]));
+                        System.out.println("" + c.getName());
+                        return;
+                    }
+                    catch (Exception e)
+                    {
+                    }
+                }
+                // Still haven't found anything, so try to see if it's an internal class
+                for (String pack : packages)
+                {
+                    String classname = getClassname(pack, args[1]);
+                    while (classname.indexOf('.') != -1)
+                    {
+                        int idx = classname.lastIndexOf('.');
+                        classname = classname.substring(0, idx) + "$" + classname.substring(idx+1);
                         try
                         {
-                            Class c = Class.forName(line + "." + args[1]);
+                            Class c = Class.forName(classname);
                             System.out.println("" + c.getName());
                             return;
                         }
@@ -93,9 +134,6 @@ public class SublimeJava
                         {
                         }
                     }
-                }
-                catch (Exception e)
-                {
                 }
                 return;
             }
