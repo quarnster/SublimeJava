@@ -352,7 +352,7 @@ class SublimeJava(sublime_plugin.EventListener):
             classname = type
             if package.endswith(".%s" % type):
                 # Explicit imports
-                packages.append(package[:-(len(type)+1)])
+                packages.append(package[:-(len(type)+1)] + ".*")
             if package.endswith(".*"):
                 classname = package[:-2] + "." + type
             elif len(package):
