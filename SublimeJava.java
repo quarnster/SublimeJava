@@ -32,7 +32,7 @@ import java.util.*;
 
 public class SublimeJava
 {
-    public static String[] getCompletion(Method m, String filter)
+    private static <T extends Method> String[] getCompletion(T m, String filter)
     {
         String str = m.getName();
         if (!str.startsWith(filter))
@@ -56,7 +56,7 @@ public class SublimeJava
         ins += ")";
         return new String[] {str, ins};
     }
-    public static String[] getCompletion(Field f, String filter)
+    private static <T extends Field> String[] getCompletion(T f, String filter)
     {
         String str = f.getName();
         if (!str.startsWith(filter))
@@ -64,6 +64,26 @@ public class SublimeJava
 
         String rep = str + "\t" + f.getType().getName();
         return new String[] {rep, str};
+    }
+    private static String[] getCompletion(Class clazz, String filter)
+    {
+        return new String[] {clazz.getSimpleName() + "\tclass", clazz.getSimpleName()};
+    }
+    private static <T> String[] getCompletion(T t, String filter)
+    {
+        if (t instanceof Method)
+        {
+            return getCompletion((Method)t, filter);
+        }
+        else if (t instanceof Field)
+        {
+            return getCompletion((Field)t, filter);
+        }
+        else if (t instanceof Class)
+        {
+            return getCompletion((Class)t, filter);
+        }
+        return null;
     }
     private static final String sep = ";;--;;";
 
@@ -78,6 +98,57 @@ public class SublimeJava
             return pack + "$" + clazz;
         }
         return clazz;
+    }
+
+    private static <T> void dumpCompletions(T[] arr, String filter)
+    {
+        for (T t : arr)
+        {
+            String[] completion = getCompletion(t, filter);
+            if (completion == null)
+            {
+                continue;
+            }
+            System.out.println(completion[0] + sep + completion[1]);
+        }
+    }
+
+    private static boolean getReturnType(Field[] fields, String filter)
+    {
+        for (Field f : fields)
+        {
+            if (filter.equals(f.getName()))
+            {
+                System.out.println("" + f.getType().getName());
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean getReturnType(Method[] methods, String filter)
+    {
+        for (Method m : methods)
+        {
+            if (filter.equals(m.getName()))
+            {
+                System.out.println("" + m.getReturnType().getName());
+                return true;
+            }
+        }
+        return false;
+    }
+    private static boolean getReturnType(Class[] classes, String filter)
+    {
+        for (Class clazz : classes)
+        {
+            if (filter.equals(clazz.getSimpleName()))
+            {
+                System.out.println(clazz.getName());
+                return true;
+            }
+        }
+        return false;
     }
 
     public static void main(String... unusedargs)
@@ -171,93 +242,27 @@ public class SublimeJava
                         filter = args[2];
                     if (args[0].equals("-complete"))
                     {
-                        for (Field f : c.getFields())
-                        {
-                            String[] completion = getCompletion(f, filter);
-                            if (completion == null)
-                                continue;
-                            System.out.println(completion[0] + sep + completion[1]);
-                        }
-                        for (Method m : c.getMethods())
-                        {
-                            String[] completion = getCompletion(m, filter);
-                            if (completion == null)
-                                continue;
-                            System.out.println(completion[0] + sep + completion[1]);
-                        }
-                        for (Class clazz : c.getClasses())
-                        {
-                            System.out.println(clazz.getSimpleName() + "\tclass" + sep + clazz.getSimpleName());
-                        }
+                        dumpCompletions(c.getFields(), filter);
+                        dumpCompletions(c.getDeclaredFields(), filter);
+                        dumpCompletions(c.getMethods(), filter);
+                        dumpCompletions(c.getDeclaredMethods(), filter);
+                        dumpCompletions(c.getClasses(), filter);
+                        dumpCompletions(c.getDeclaredClasses(), filter);
                     }
                     else if (args[0].equals("-returntype"))
                     {
-                        boolean cont = false;
-                        for (Field f : c.getFields())
-                        {
-                            if (filter.equals(f.getName()))
-                            {
-                                System.out.println("" + f.getType().getName());
-                                cont = true;
-                                break;
-                            }
-                        }
-                        if (cont)
+                        if (getReturnType(c.getDeclaredFields(), filter))
                             continue;
-                        for (Method m : c.getMethods())
-                        {
-                            if (filter.equals(m.getName()))
-                            {
-                                System.out.println("" + m.getReturnType().getName());
-                                break;
-                            }
-                        }
-                        if (cont)
+                        if (getReturnType(c.getDeclaredMethods(), filter))
                             continue;
-                        for (Class clazz : c.getClasses())
-                        {
-                            if (filter.equals(clazz.getSimpleName()))
-                            {
-                                System.out.println(clazz.getName());
-                                break;
-                            }
-                        }
-                    }
-                    else if (args[0].equals("-cache"))
-                    {
-                        String source = "unknown";
-                        try
-                        {
-                            URL u = c.getResource("/" + c.getName().replace('.', '/') + ".class");
-                            source = u.toString();
-                        }
-                        catch (Exception e)
-                        {
-                        }
-                        System.out.println(c.getName() + sep + source);
-                        for (Field f : c.getFields())
-                        {
-                            String[] comp = getCompletion(f, "");
-                            System.out.println("0" + sep + f.getType().getName() + sep +
-                                                      f.getModifiers() + sep +
-                                                      comp[0] + sep +
-                                                      comp[1]);
-                        }
-                        for (Method m : c.getMethods())
-                        {
-                            String[] comp = getCompletion(m, "");
-                            System.out.println("1" + sep + m.getReturnType().getName() + sep +
-                                                      m.getModifiers() + sep +
-                                                      comp[0] + sep +
-                                                      comp[1]);
-                        }
-                        for (Class clazz : c.getClasses())
-                        {
-                            System.out.println("2" + sep + clazz.getName() + sep +
-                                                            clazz.getModifiers() + sep +
-                                                            clazz.getSimpleName() + "\tclass" + sep +
-                                                            clazz.getSimpleName());
-                        }
+                        if (getReturnType(c.getDeclaredClasses(), filter))
+                            continue;
+                        if (getReturnType(c.getFields(), filter))
+                            continue;
+                        if (getReturnType(c.getMethods(), filter))
+                            continue;
+                        if (getReturnType(c.getClasses(), filter))
+                            continue;
                     }
                 }
                 catch (ClassNotFoundException x)

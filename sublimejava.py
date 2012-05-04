@@ -61,7 +61,6 @@ def get_cmd():
         classpath = get_setting("sublimejava_classpath", ["."])
         classpath.append(".")
         classpath = javaseparator.join(classpath)
-        print classpath
     return "java -classpath %s SublimeJava" % classpath
 
 
@@ -207,7 +206,11 @@ class SublimeJava(sublime_plugin.EventListener):
     def complete_class(self, absolute_classname, prefix):
         stdout = run_java("-complete %s %s" % (absolute_classname, prefix))
         stdout = stdout.split("\n")[:-2]
-        ret = [tuple(line.split(";;--;;")) for line in stdout]
+        members = [tuple(line.split(";;--;;")) for line in stdout]
+        ret = []
+        for member in members:
+            if member not in ret:
+                ret.append(member)
         return sorted(ret, key=lambda a: a[0])
 
     def get_return_type(self, absolute_classname, prefix):
