@@ -21,16 +21,6 @@ Please go [[https://github.com/quarnster/SublimeJava/issues?sort=created&directi
 === Usage ===
 Once installed it'll try to provide reasonable completion suggestions when you trigger autocompletion.
 
-At the first install, it can take some time to create the database and you might see a SublimeJava
-[[https://github.com/quarnster/SublimeJava/issues/6|window popping up]] as it is caching some classes.
-
-It can also take some time to cache classes the first time they are accessed.
-
-If you find that the cache is out of date, it can be cleared by:
-    # Opening up the command palette (cmd+shift+P or ctrl+shift+P)
-    # Type in SublimeJava
-    # Choose the "SublimeJava: Clear Cache" entry
-
 === License ===
 This plugin is using the zlib license
 
@@ -56,8 +46,3 @@ freely, subject to the following restrictions:
    3. This notice may not be removed or altered from any source
    distribution.
 }}}
-
-In addition to this, since Sublime Text 2 [[http://sublimetext.userecho.com/topic/44995-include-sqlite-again|isn't shipped with the sqlite3 module]]
-the [[http://code.google.com/p/pysqlite/|pysqlite2 module]] using the [[http://www.opensource.org/licenses/mit-license.php|MIT license]] is bundled with the plugin. Both the 32 bit and the 64 bit pysqlite2 binaries are from [[http://www.lfd.uci.edu/~gohlke/pythonlibs/#pysqlite|this page]] by Christoph Gohlke.
-
-
