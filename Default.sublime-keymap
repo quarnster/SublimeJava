@@ -4,7 +4,8 @@
         "context":
         [
             {"key": "sublimejava.supported_language"},
-            {"key": "sublimejava.dotcomplete"}
+            {"key": "sublimejava.dotcomplete"},
+            {"key": "sublimejava.is_code"}
         ]
     }
 ]

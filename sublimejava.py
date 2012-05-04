@@ -294,3 +294,7 @@ class SublimeJava(sublime_plugin.EventListener):
             return get_setting(key.replace(".", "_"), True)
         elif key == "sublimejava.supported_language":
             return is_supported_language(view)
+        elif key == "sublimejava.is_code":
+            caret = view.sel()[0].a
+            scope = view.scope_name(caret).strip()
+            return re.search("(string.)|(comment.)", scope) == None
