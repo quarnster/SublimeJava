@@ -331,9 +331,6 @@ class SublimeJava(sublime_plugin.EventListener):
             classname = "%s.%s" % (match.group(1), type)
             if cache.get_cached_class_exists(classname):
                 return classname
-            else:
-                if re.search("\\s*import\\s+%s;" % classname, data):
-                    return classname
             # Try and see if it's an inner class then
             count = 0
             while "." in classname and count < 10:
@@ -353,6 +350,9 @@ class SublimeJava(sublime_plugin.EventListener):
         packages.append("")  # for int, boolean, etc
         for package in packages:
             classname = type
+            if package.endswith(".%s" % type):
+                # Explicit imports
+                packages.append(package[:-(len(type)+1)])
             if package.endswith(".*"):
                 classname = package[:-2] + "." + type
             elif len(package):
