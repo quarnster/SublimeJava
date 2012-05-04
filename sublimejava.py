@@ -87,9 +87,7 @@ def run_java(cmd, stdin=None):
     global java_cmd
     realcmd = get_cmd()
     if not java_proc or realcmd != java_cmd:
-        print realcmd, java_cmd, java_proc
         if java_proc:
-            print "jp: %s" % java_proc.poll()
             java_proc.stdin.write("-quit\n")
             while data_queue.get() != ";;--;;exit;;--;;":
                 continue
