@@ -195,6 +195,7 @@ class Cache:
             returnTypeId = self.get_typeid(returnType)
 
             self.cacheCursor.execute("""insert into member (typeId, returnTypeId, field_or_method, flags, insertionText, displayText) values (%d, %d, %d, %d, '%s', '%s')""" % (classId, returnTypeId, membertype, flags, insertionText, displayText))
+        self.cache.commit()
 
     def get_cached_class_exists(self, classname):
         self.cacheCursor.execute("select * from type where name='%s' limit 1" % classname)
@@ -330,6 +331,9 @@ class SublimeJava(sublime_plugin.EventListener):
             classname = "%s.%s" % (match.group(1), type)
             if cache.get_cached_class_exists(classname):
                 return classname
+            else:
+                if re.search("\\s*import\\s+%s;" % classname, data):
+                    return classname
             # Try and see if it's an inner class then
             count = 0
             while "." in classname and count < 10:
