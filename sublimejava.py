@@ -192,8 +192,16 @@ class SublimeJava(sublime_plugin.EventListener):
         packages.append("")  # for int, boolean, etc
         for package in packages:
             if package.endswith(".%s" % type):
-                # Explicit imports
-                packages.append(package[:-(len(type)+1)] + ".*")
+                # Explicit imports, we want these to have the highest
+                # priority when searching for the absolute type, so
+                # insert them at the top of the package list.
+                # Both the .* version and not is added so that
+                # blah.<searchedForClass> and blah$<searchedForClass>
+                # is tested
+                add = package[:-(len(type)+1)]
+                packages.insert(0, add + ".*")
+                packages.insert(1, add)
+                break
         packages.append(";;--;;")
 
         output = run_java("-findclass %s" % (type), "\n".join(packages)).strip()

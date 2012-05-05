@@ -159,114 +159,132 @@ public class SublimeJava
             boolean first = true;
             while (true)
             {
-                if (!first)
-                    // Just to indicate that there's no more output from the command and we're ready for new input
-                    System.out.println(";;--;;");
-                first = false;
-                String cmd = in.readLine();
-                String args[] = cmd.split(" ");
-                System.err.println(args.length);
-                for (int i = 0; i < args.length; i++)
-                {
-                    System.err.println(args[i]);
-                }
-
                 try
                 {
-                    if (args[0].equals("-quit"))
+                    if (!first)
+                        // Just to indicate that there's no more output from the command and we're ready for new input
+                        System.out.println(";;--;;");
+                    first = false;
+                    String cmd = in.readLine();
+                    if (cmd == null)
+                        break;
+                    String args[] = cmd.split(" ");
+                    System.err.println(args.length);
+                    for (int i = 0; i < args.length; i++)
                     {
-                        System.err.println("quitting upon request");
-                        return;
+                        System.err.println(args[i]);
                     }
-                    else if (args[0].equals("-separator"))
+
+                    try
                     {
-                        System.out.println(System.getProperty("path.separator"));
-                        continue;
-                    }
-                    else if (args[0].equals("-findclass"))
-                    {
-                        String line = null;
-                        ArrayList<String> packages = new ArrayList<String>();
-                        try
+                        if (args[0].equals("-quit"))
                         {
-                            while ((line = in.readLine()) != null)
-                            {
-                                if (line.compareTo(sep) == 0)
-                                    break;
-                                System.err.println(line);
-                                System.err.println(line == sep);
-                                packages.add(line);
-                            }
+                            System.err.println("quitting upon request");
+                            return;
                         }
-                        catch (Exception e)
+                        else if (args[0].equals("-separator"))
                         {
+                            System.out.println(System.getProperty("path.separator"));
+                            continue;
                         }
-                        for (String pack : packages)
+                        else if (args[0].equals("-findclass"))
                         {
+                            String line = null;
+                            ArrayList<String> packages = new ArrayList<String>();
                             try
                             {
-                                Class c = Class.forName(getClassname(pack, args[1]));
-                                System.out.println("" + c.getName());
-                                continue;
+                                while ((line = in.readLine()) != null)
+                                {
+                                    if (line.compareTo(sep) == 0)
+                                        break;
+                                    packages.add(line);
+                                }
                             }
                             catch (Exception e)
                             {
                             }
-                        }
-                        // Still haven't found anything, so try to see if it's an internal class
-                        for (String pack : packages)
-                        {
-                            String classname = getClassname(pack, args[1]);
-                            while (classname.indexOf('.') != -1)
+                            boolean found = false;
+                            for (String pack : packages)
                             {
-                                int idx = classname.lastIndexOf('.');
-                                classname = classname.substring(0, idx) + "$" + classname.substring(idx+1);
                                 try
                                 {
+                                    String classname = getClassname(pack, args[1]);
+                                    System.err.println("Testing for: " + classname);
                                     Class c = Class.forName(classname);
                                     System.out.println("" + c.getName());
-                                    continue;
+                                    found = true;
+                                    break;
                                 }
                                 catch (Exception e)
                                 {
                                 }
                             }
+                            if (found)
+                                continue;
+                            // Still haven't found anything, so try to see if it's an internal class
+                            for (String pack : packages)
+                            {
+                                String classname = getClassname(pack, args[1]);
+                                while (!found && classname.indexOf('.') != -1)
+                                {
+                                    int idx = classname.lastIndexOf('.');
+                                    classname = classname.substring(0, idx) + "$" + classname.substring(idx+1);
+                                    try
+                                    {
+                                        System.err.println("Testing for: " + classname);
+                                        Class c = Class.forName(classname);
+                                        System.out.println("" + c.getName());
+                                        found = true;
+                                        break;
+                                    }
+                                    catch (Exception e)
+                                    {
+                                    }
+                                }
+                                if (found)
+                                    break;
+                            }
+                            continue;
                         }
-                        continue;
+                        if (args.length < 2)
+                            continue;
+                        Class<?> c = Class.forName(args[1]);
+                        String filter = "";
+                        if (args.length >= 3)
+                            filter = args[2];
+                        if (args[0].equals("-complete"))
+                        {
+                            dumpCompletions(c.getFields(), filter);
+                            dumpCompletions(c.getDeclaredFields(), filter);
+                            dumpCompletions(c.getMethods(), filter);
+                            dumpCompletions(c.getDeclaredMethods(), filter);
+                            dumpCompletions(c.getClasses(), filter);
+                            dumpCompletions(c.getDeclaredClasses(), filter);
+                        }
+                        else if (args[0].equals("-returntype"))
+                        {
+                            if (getReturnType(c.getDeclaredFields(), filter))
+                                continue;
+                            if (getReturnType(c.getDeclaredMethods(), filter))
+                                continue;
+                            if (getReturnType(c.getDeclaredClasses(), filter))
+                                continue;
+                            if (getReturnType(c.getFields(), filter))
+                                continue;
+                            if (getReturnType(c.getMethods(), filter))
+                                continue;
+                            if (getReturnType(c.getClasses(), filter))
+                                continue;
+                        }
                     }
-                    if (args.length < 2)
-                        continue;
-                    Class<?> c = Class.forName(args[1]);
-                    String filter = "";
-                    if (args.length >= 3)
-                        filter = args[2];
-                    if (args[0].equals("-complete"))
+                    catch (ClassNotFoundException x)
                     {
-                        dumpCompletions(c.getFields(), filter);
-                        dumpCompletions(c.getDeclaredFields(), filter);
-                        dumpCompletions(c.getMethods(), filter);
-                        dumpCompletions(c.getDeclaredMethods(), filter);
-                        dumpCompletions(c.getClasses(), filter);
-                        dumpCompletions(c.getDeclaredClasses(), filter);
-                    }
-                    else if (args[0].equals("-returntype"))
-                    {
-                        if (getReturnType(c.getDeclaredFields(), filter))
-                            continue;
-                        if (getReturnType(c.getDeclaredMethods(), filter))
-                            continue;
-                        if (getReturnType(c.getDeclaredClasses(), filter))
-                            continue;
-                        if (getReturnType(c.getFields(), filter))
-                            continue;
-                        if (getReturnType(c.getMethods(), filter))
-                            continue;
-                        if (getReturnType(c.getClasses(), filter))
-                            continue;
                     }
                 }
-                catch (ClassNotFoundException x)
+                catch (Exception e)
                 {
+                    System.err.println("Exception caugth: " + e.getMessage());
+                    e.printStackTrace(System.err);
                 }
             }
         }
