@@ -5,7 +5,7 @@
         [
             {"key": "sublimejava.supported_language"},
             {"key": "sublimejava.dotcomplete"},
-            {"key": "sublimejava.is_code"}
+            {"key": "completion_common.is_code"}
         ]
     }
 ]

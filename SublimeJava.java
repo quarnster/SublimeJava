@@ -283,7 +283,7 @@ public class SublimeJava
                 }
                 catch (Exception e)
                 {
-                    System.err.println("Exception caugth: " + e.getMessage());
+                    System.err.println("Exception caught: " + e.getMessage());
                     e.printStackTrace(System.err);
                 }
             }

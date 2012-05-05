@@ -12,6 +12,8 @@ Please go [[https://github.com/quarnster/SublimeJava/issues?sort=created&directi
     * You need to manually install it using git
     ** Go to your packages directory and type:
     ***        git clone --recursive https://github.com/quarnster/SublimeJava SublimeJava
+    ** To update to the latest commit, use this command in the SublimeJava directory:
+    ***        git pull && git submodule update --init
     * You most likely want to configure the "sublimejava_classpath" setting to your own, issue [[https://github.com/quarnster/SublimeJava/issues/23|23]] details how this is done.
 
 === Usage ===
