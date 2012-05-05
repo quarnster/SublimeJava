@@ -61,7 +61,7 @@ class SublimeJavaCompletion(completioncommon.CompletionCommon):
         self.javaseparator = None  # just so that get_cmd references it. It's set "for real" later
         self.javaseparator = self.run_completion("-separator").strip()
 
-    def get_packages(self, data):
+    def get_packages(self, data, thispackage, type):
         packages = re.findall("[ \t]*import[ \t]+(.*);", data)
         packages.append("java.lang.*")
         packages.append("")  # for int, boolean, etc
@@ -77,6 +77,7 @@ class SublimeJavaCompletion(completioncommon.CompletionCommon):
                 packages.insert(0, add + ".*")
                 packages.insert(1, add)
                 break
+        packages.append(thispackage + ".*")
         return packages
 
     def get_cmd(self):
