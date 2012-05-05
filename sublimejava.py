@@ -23,6 +23,7 @@ freely, subject to the following restrictions:
 import sublime
 import sublime_plugin
 import os.path
+import re
 try:
     from sublimecompletioncommon import completioncommon
 except:
@@ -59,6 +60,24 @@ class SublimeJavaCompletion(completioncommon.CompletionCommon):
         super(SublimeJavaCompletion, self).__init__("SublimeJava.sublime-settings", os.path.dirname(os.path.abspath(__file__)))
         self.javaseparator = None  # just so that get_cmd references it. It's set "for real" later
         self.javaseparator = self.run_completion("-separator").strip()
+
+    def get_packages(self, data):
+        packages = re.findall("[ \t]*import[ \t]+(.*);", data)
+        packages.append("java.lang.*")
+        packages.append("")  # for int, boolean, etc
+        for package in packages:
+            if package.endswith(".%s" % type):
+                # Explicit imports, we want these to have the highest
+                # priority when searching for the absolute type, so
+                # insert them at the top of the package list.
+                # Both the .* version and not is added so that
+                # blah.<searchedForClass> and blah$<searchedForClass>
+                # is tested
+                add = package[:-(len(type)+1)]
+                packages.insert(0, add + ".*")
+                packages.insert(1, add)
+                break
+        return packages
 
     def get_cmd(self):
         classpath = "."
