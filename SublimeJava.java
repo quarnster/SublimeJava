@@ -20,19 +20,41 @@ freely, subject to the following restrictions:
    3. This notice may not be removed or altered from any source
    distribution.
 */
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Member;
+import java.lang.reflect.*;
 import java.net.URL;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.*;
-
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 public class SublimeJava
 {
-    private static <T extends Method> String[] getCompletion(T m, String filter)
+
+    private static String getInstancedType(Class<?> c, String gen, String ret, String[] templateParam)
+    {
+        if (gen.startsWith("class "))
+            gen = gen.substring("class ".length());
+        if (!gen.equals(ret))
+        {
+            boolean set = false;
+            TypeVariable<?> tv[] = c.getTypeParameters();
+            for (int i = 0; i < tv.length && i < templateParam.length; i++)
+            {
+                String pat = "((^|[<,\\s])+)" + tv[i].getName() +  "(([,\\s>]|$)+)";
+                Pattern p = Pattern.compile(pat);
+                Matcher m = p.matcher(gen);
+                if (m.find())
+                {
+                    gen = m.replaceAll(m.group(1) + templateParam[i] + m.group(3));
+                }
+            }
+            ret = gen;
+        }
+        return ret;
+    }
+
+    private static String[] getCompletion(Method m, String filter, String[] templateParam)
     {
         String str = m.getName();
         if (!str.startsWith(filter))
@@ -40,48 +62,53 @@ public class SublimeJava
         str += "(";
         String ins = str;
         int count = 1;
-        for (Class c2 : m.getParameterTypes())
+        Type[] generic = m.getGenericParameterTypes();
+        Class[] normal = m.getParameterTypes();
+        for (int i = 0; i < normal.length; i++)
         {
             if (count > 1)
             {
                 str += ", ";
                 ins += ", ";
             }
-            String n = c2.getName();
-            str += n;
-            ins += "${"+count + ":" + n + "}";
+
+            String gen = generic[i].toString();
+            String ret = normal[i].getName();
+            ret = getInstancedType(m.getDeclaringClass(), gen, ret, templateParam);
+            str += ret;
+            ins += "${"+count + ":" + ret + "}";
             count++;
         }
-        str += ")\t" + m.getReturnType().getName();
+        str += ")\t" + getInstancedType(m.getDeclaringClass(), m.getGenericReturnType().toString(), m.getReturnType().getName(), templateParam);
         ins += ")";
         return new String[] {str, ins};
     }
-    private static <T extends Field> String[] getCompletion(T f, String filter)
+    private static <T extends Field> String[] getCompletion(T f, String filter, String[] templateArgs)
     {
         String str = f.getName();
         if (!str.startsWith(filter))
             return null;
 
-        String rep = str + "\t" + f.getType().getName();
+        String rep = str + "\t" + getInstancedType(f.getDeclaringClass(), f.getGenericType().toString(), f.getType().getName(), templateArgs);
         return new String[] {rep, str};
     }
-    private static String[] getCompletion(Class clazz, String filter)
+    private static String[] getCompletion(Class clazz, String filter, String[] templateArgs)
     {
         return new String[] {clazz.getSimpleName() + "\tclass", clazz.getSimpleName()};
     }
-    private static <T> String[] getCompletion(T t, String filter)
+    private static <T> String[] getCompletion(T t, String filter, String[] templateArgs)
     {
         if (t instanceof Method)
         {
-            return getCompletion((Method)t, filter);
+            return getCompletion((Method)t, filter, templateArgs);
         }
         else if (t instanceof Field)
         {
-            return getCompletion((Field)t, filter);
+            return getCompletion((Field)t, filter, templateArgs);
         }
         else if (t instanceof Class)
         {
-            return getCompletion((Class)t, filter);
+            return getCompletion((Class)t, filter, templateArgs);
         }
         return null;
     }
@@ -100,11 +127,11 @@ public class SublimeJava
         return clazz;
     }
 
-    private static <T> void dumpCompletions(T[] arr, String filter)
+    private static <T> void dumpCompletions(T[] arr, String filter, String[] templateArgs)
     {
         for (T t : arr)
         {
-            String[] completion = getCompletion(t, filter);
+            String[] completion = getCompletion(t, filter, templateArgs);
             if (completion == null)
             {
                 continue;
@@ -113,32 +140,38 @@ public class SublimeJava
         }
     }
 
-    private static boolean getReturnType(Field[] fields, String filter)
+    private static boolean getReturnType(Field[] fields, String filter, String templateParam[])
     {
         for (Field f : fields)
         {
             if (filter.equals(f.getName()))
             {
-                System.out.println("" + f.getType().getName());
+                String gen = f.getGenericType().toString();
+                String ret = f.getType().getName();
+                ret = getInstancedType(f.getDeclaringClass(), gen, ret, templateParam);
+                System.out.println("" + ret);
                 return true;
             }
         }
         return false;
     }
 
-    private static boolean getReturnType(Method[] methods, String filter)
+    private static boolean getReturnType(Method[] methods, String filter, String templateParam[])
     {
         for (Method m : methods)
         {
             if (filter.equals(m.getName()))
             {
-                System.out.println("" + m.getReturnType().getName());
+                String gen = m.getGenericReturnType().toString();
+                String ret = m.getReturnType().getName();
+                ret = getInstancedType(m.getDeclaringClass(), gen, ret, templateParam);
+                System.out.println("" + ret);
                 return true;
             }
         }
         return false;
     }
-    private static boolean getReturnType(Class[] classes, String filter)
+    private static boolean getReturnType(Class[] classes, String filter, String templateParam[])
     {
         for (Class clazz : classes)
         {
@@ -251,29 +284,43 @@ public class SublimeJava
                         Class<?> c = Class.forName(args[1]);
                         String filter = "";
                         if (args.length >= 3)
+                        {
                             filter = args[2];
+                            if (filter.equals(sep))
+                            {
+                                filter = "";
+                            }
+                        }
+                        int len = args.length - 3;
+                        if (len < 0)
+                            len = 0;
+                        String[] templateParam = new String[len];
+                        for (int i = 0; i < len; i++)
+                        {
+                            templateParam[i] = args[i+3];
+                        }
                         if (args[0].equals("-complete"))
                         {
-                            dumpCompletions(c.getFields(), filter);
-                            dumpCompletions(c.getDeclaredFields(), filter);
-                            dumpCompletions(c.getMethods(), filter);
-                            dumpCompletions(c.getDeclaredMethods(), filter);
-                            dumpCompletions(c.getClasses(), filter);
-                            dumpCompletions(c.getDeclaredClasses(), filter);
+                            dumpCompletions(c.getFields(), filter, templateParam);
+                            dumpCompletions(c.getDeclaredFields(), filter, templateParam);
+                            dumpCompletions(c.getMethods(), filter, templateParam);
+                            dumpCompletions(c.getDeclaredMethods(), filter, templateParam);
+                            dumpCompletions(c.getClasses(), filter, templateParam);
+                            dumpCompletions(c.getDeclaredClasses(), filter, templateParam);
                         }
                         else if (args[0].equals("-returntype"))
                         {
-                            if (getReturnType(c.getDeclaredFields(), filter))
+                            if (getReturnType(c.getDeclaredFields(), filter, templateParam))
                                 continue;
-                            if (getReturnType(c.getDeclaredMethods(), filter))
+                            if (getReturnType(c.getDeclaredMethods(), filter, templateParam))
                                 continue;
-                            if (getReturnType(c.getDeclaredClasses(), filter))
+                            if (getReturnType(c.getDeclaredClasses(), filter, templateParam))
                                 continue;
-                            if (getReturnType(c.getFields(), filter))
+                            if (getReturnType(c.getFields(), filter, templateParam))
                                 continue;
-                            if (getReturnType(c.getMethods(), filter))
+                            if (getReturnType(c.getMethods(), filter, templateParam))
                                 continue;
-                            if (getReturnType(c.getClasses(), filter))
+                            if (getReturnType(c.getClasses(), filter, templateParam))
                                 continue;
                         }
                     }
