@@ -46,7 +46,7 @@ public class SublimeJava
                 Matcher m = p.matcher(gen);
                 if (m.find())
                 {
-                    gen = m.replaceAll(m.group(1) + templateParam[i] + m.group(3));
+                    gen = m.replaceAll(Matcher.quoteReplacement(m.group(1) + templateParam[i] + m.group(3)));
                 }
             }
             ret = gen;
@@ -76,7 +76,7 @@ public class SublimeJava
             String ret = normal[i].getName();
             ret = getInstancedType(m.getDeclaringClass(), gen, ret, templateParam);
             str += ret;
-            ins += "${"+count + ":" + ret + "}";
+            ins += "${"+count + ":" + ret.replace("$", "\\$") + "}";
             count++;
         }
         str += ")\t" + getInstancedType(m.getDeclaringClass(), m.getGenericReturnType().toString(), m.getReturnType().getName(), templateParam);
@@ -201,7 +201,7 @@ public class SublimeJava
                     String cmd = in.readLine();
                     if (cmd == null)
                         break;
-                    String args[] = cmd.split(" ");
+                    String args[] = cmd.split(";;--;;");
                     System.err.println(args.length);
                     for (int i = 0; i < args.length; i++)
                     {
