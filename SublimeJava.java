@@ -35,6 +35,23 @@ public class SublimeJava
     {
         if (gen.startsWith("class "))
             gen = gen.substring("class ".length());
+        {
+            // This is a bit odd, and I'm not sure it's correct. Seems "gen" returns an absolute
+            // class path that isn't correct. I've only seen this for the specific class that is
+            // in the repro case of issue #26, but it probably happens elsewhere too so could
+            // have to be tweaked.
+            //
+            // In short, gen will list Tests.Tests$Foo whereas the correct type would be just
+            // Tests$Foo
+            String pat = "(\\w+\\.)+"+ Pattern.quote(ret);
+            Pattern p = Pattern.compile(pat);
+            Matcher m = p.matcher(gen);
+            if (m.find())
+            {
+                gen = m.replaceAll(Matcher.quoteReplacement(ret));
+            }
+        }
+
         if (!gen.equals(ret))
         {
             boolean set = false;
