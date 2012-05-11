@@ -2,5 +2,10 @@
     // You probably want to configure this to something of your own
     "sublimejava_classpath": ["/Users/quarnster/android/android-sdk-mac_86/platforms/android-14/android.jar"],
 
-    "sublimejava_dotcomplete": true
+    "sublimejava_dotcomplete": true,
+
+    // When set to true will inhibit the completions suggested
+    // by default by Sublime Text 2 if SublimeJava can't
+    // find anything to complete
+    "completioncommon_inhibit_sublime_completions": true
 }
