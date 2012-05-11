@@ -66,14 +66,18 @@ class SublimeJavaCompletion(completioncommon.CompletionCommon):
         packages.append("java.lang.*")
         packages.append("")  # for int, boolean, etc
         for package in packages:
-            if package.endswith(".%s" % type):
+            idx = type.find(".")
+            if idx == -1:
+                idx = len(type)
+            subtype = type[:idx]
+            if re.search("%s$" % subtype, package):
                 # Explicit imports, we want these to have the highest
                 # priority when searching for the absolute type, so
                 # insert them at the top of the package list.
                 # Both the .* version and not is added so that
                 # blah.<searchedForClass> and blah$<searchedForClass>
                 # is tested
-                add = package[:-(len(type)+1)]
+                add = package[:-(len(subtype)+1)]
                 packages.insert(0, add + ".*")
                 packages.insert(1, add)
                 break
