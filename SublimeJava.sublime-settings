@@ -7,5 +7,9 @@
     // When set to true will inhibit the completions suggested
     // by default by Sublime Text 2 if SublimeJava can't
     // find anything to complete
-    "completioncommon_inhibit_sublime_completions": true
+    "completioncommon_inhibit_sublime_completions": true,
+
+    // When set to true will shorten class names in the completion list
+    // by removing the package name.
+    "completioncommon_shorten_names": true
 }
