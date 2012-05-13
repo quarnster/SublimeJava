@@ -62,7 +62,7 @@ class SublimeJavaCompletion(completioncommon.CompletionCommon):
         self.javaseparator = self.run_completion("-separator").strip()
 
     def get_packages(self, data, thispackage, type):
-        packages = re.findall("[ \t]*import[ \t]+(.*);", data)
+        packages = re.findall(r"(?:^|\n)[ \t]*import[ \t]+(.*);", data)
         packages.append("java.lang.*")
         packages.append("")  # for int, boolean, etc
         for package in packages:
