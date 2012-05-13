@@ -100,7 +100,7 @@ public class SublimeJava
         ins += ")";
         return new String[] {str, ins};
     }
-    private static <T extends Field> String[] getCompletion(T f, String filter, String[] templateArgs)
+    private static String[] getCompletion(Field f, String filter, String[] templateArgs)
     {
         String str = f.getName();
         if (!str.startsWith(filter))
@@ -144,6 +144,41 @@ public class SublimeJava
         return clazz;
     }
 
+    private static final int STATIC_BIT = 1 << 0;
+    private static final int PRIVATE_BIT = 1 << 1;
+    private static final int PROTECTED_BIT = 1 << 2;
+    private static final int PUBLIC_BIT = 1 << 3;
+
+    private static <T> int getModifiers(T t)
+    {
+        int modifiers = 0;
+        if (t instanceof Method)
+        {
+            Method m = (Method) t;
+            modifiers = m.getModifiers();
+        }
+        else if (t instanceof Field)
+        {
+            Field f = (Field) t;
+            modifiers = f.getModifiers();
+        }
+        else if (t instanceof Class)
+        {
+            Class c = (Class) t;
+            modifiers = c.getModifiers();
+        }
+        int returnvalue = 0;
+        if (Modifier.isStatic(modifiers))
+            returnvalue |= STATIC_BIT;
+        if (Modifier.isPrivate(modifiers))
+            returnvalue |= PRIVATE_BIT;
+        if (Modifier.isProtected(modifiers))
+            returnvalue |= PROTECTED_BIT;
+        if (Modifier.isPublic(modifiers))
+            returnvalue |= PUBLIC_BIT;
+        return returnvalue;
+    }
+
     private static <T> void dumpCompletions(T[] arr, String filter, String[] templateArgs)
     {
         for (T t : arr)
@@ -153,7 +188,7 @@ public class SublimeJava
             {
                 continue;
             }
-            System.out.println(completion[0] + sep + completion[1]);
+            System.out.println(completion[0] + sep + completion[1] + sep + getModifiers(t));
         }
     }
 

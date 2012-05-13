@@ -26,6 +26,7 @@ import os.path
 import re
 try:
     from sublimecompletioncommon import completioncommon
+    reload(completioncommon)
 except:
     def hack(func):
         # If there's a sublime.error_message before a window is open
