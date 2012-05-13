@@ -61,15 +61,15 @@ class SublimeJavaCompletion(completioncommon.CompletionCommon):
         self.javaseparator = None  # just so that get_cmd references it. It's set "for real" later
         self.javaseparator = self.run_completion("-separator").strip()
         self.regex = [
-            (re.compile(r"\[I([,)]|$)"), "int[]"),
-            (re.compile(r"\[F([,)]|$)"), "float[]"),
-            (re.compile(r"\[Z([,)]|$)"), "boolean[]"),
-            (re.compile(r"\[B([,)]|$)"), "byte[]"),
-            (re.compile(r"\[C([,)]|$)"), "char[]"),
-            (re.compile(r"\[S([,)]|$)"), "short[]"),
-            (re.compile(r"\[J([,)]|$)"), "long[]"),
-            (re.compile(r"\[D([,)]|$)"), "double[]"),
-            (re.compile(r"\[\L?([\w./]+)(;)?"), r"\1[]")]
+            (re.compile(r"\[I([,)}]|$)"), r"int[]\1"),
+            (re.compile(r"\[F([,)}]|$)"), r"float[]\1"),
+            (re.compile(r"\[Z([,)}]|$)"), r"boolean[]\1"),
+            (re.compile(r"\[B([,)}]|$)"), r"byte[]\1"),
+            (re.compile(r"\[C([,)}]|$)"), r"char[]\1"),
+            (re.compile(r"\[S([,)}]|$)"), r"short[]\1"),
+            (re.compile(r"\[J([,)}]|$)"), r"long[]\1"),
+            (re.compile(r"\[D([,)}]|$)"), r"double[]\1"),
+            (re.compile(r"\[\L?([\w\./]+)(;)?"), r"\1[]")]
 
     def get_packages(self, data, thispackage, type):
         packages = re.findall(r"(?:^|\n)[ \t]*import[ \t]+(.*);", data)
