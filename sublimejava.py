@@ -60,6 +60,16 @@ class SublimeJavaCompletion(completioncommon.CompletionCommon):
         super(SublimeJavaCompletion, self).__init__("SublimeJava.sublime-settings", os.path.dirname(os.path.abspath(__file__)))
         self.javaseparator = None  # just so that get_cmd references it. It's set "for real" later
         self.javaseparator = self.run_completion("-separator").strip()
+        self.regex = [
+            (re.compile(r"\[I([,)]|$)"), "int[]"),
+            (re.compile(r"\[F([,)]|$)"), "float[]"),
+            (re.compile(r"\[Z([,)]|$)"), "boolean[]"),
+            (re.compile(r"\[B([,)]|$)"), "byte[]"),
+            (re.compile(r"\[C([,)]|$)"), "char[]"),
+            (re.compile(r"\[S([,)]|$)"), "short[]"),
+            (re.compile(r"\[J([,)]|$)"), "long[]"),
+            (re.compile(r"\[D([,)]|$)"), "double[]"),
+            (re.compile(r"\[\L?([\w./]+)(;)?"), r"\1[]")]
 
     def get_packages(self, data, thispackage, type):
         packages = re.findall(r"(?:^|\n)[ \t]*import[ \t]+(.*);", data)
@@ -97,6 +107,25 @@ class SublimeJavaCompletion(completioncommon.CompletionCommon):
             return False
         language = self.get_language(view)
         return language == "java" or language == "jsp"
+
+    def sub(self, regex, sub, data):
+        olddata = data
+        data = regex.sub(sub, data)
+        while data != olddata:
+            olddata = data
+            data = regex.sub(sub, data)
+        return data
+
+    def fixnames(self, data):
+        for regex, replace in self.regex:
+            data = self.sub(regex, replace, data)
+        return data
+
+    def return_completions(self, comp):
+        ret = []
+        for display, insert in comp:
+            ret.append((self.fixnames(display), self.fixnames(insert)))
+        return super(SublimeJavaCompletion, self).return_completions(ret)
 
 comp = SublimeJavaCompletion()
 
