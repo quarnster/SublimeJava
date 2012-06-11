@@ -1,0 +1,20 @@
+{
+    "schema_version": "1.1",
+    "packages": [
+        {
+            "name": "SublimeJava",
+            "description": "Java completions for Sublime Text 2",
+            "author": "Fredrik Ehnbom (quarnster)",
+            "homepage": "http://github.com/quarnster/SublimeJava",
+            "last_modified": "2012-06-11 18:00:00",
+            "platforms": {
+                "*": [
+                    {
+                        "version": "1.0.0",
+                        "url": "http://github.com/downloads/quarnster/SublimeJava/SublimeJava.sublime-package"
+                    }
+                ]
+            }
+        }
+    ]
+}
