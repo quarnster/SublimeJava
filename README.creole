@@ -8,8 +8,12 @@ Please go [[https://github.com/quarnster/SublimeJava/issues?sort=created&directi
   # You need to have java installed on your system and the java binary in your path
 
 === Installation ===
-    * //**[[https://github.com/wbond/sublime_package_control/issues/126|Package Control can't install the plugin at the moment]]**//
-    * You need to manually install it using git
+    * The easiest way to install SublimeJava is via the excellent Package Control Plugin
+    ** See http://wbond.net/sublime_packages/package_control#Installation
+    *** Once package control has been installed, bring up the command palette (cmd+shift+P or ctrl+shift+P)
+    *** Type Install and select "Package Control: Install Package"
+    *** Select SublimeJava from the list. Package Control will keep it automatically updated for you
+    * If you want to manually install it using git instead:
     ** Go to your packages directory and type:
     ***        git clone --recursive https://github.com/quarnster/SublimeJava SublimeJava
     ** To update to the latest commit, use this command in the SublimeJava directory:
