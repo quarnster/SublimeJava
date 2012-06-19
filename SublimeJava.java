@@ -21,12 +21,12 @@ freely, subject to the following restrictions:
    distribution.
 */
 import java.lang.reflect.*;
-import java.net.URL;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.net.*;
+import java.io.*;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.jar.*;
 
 public class SublimeJava
 {
@@ -236,6 +236,147 @@ public class SublimeJava
         return false;
     }
 
+    private static boolean isPackage(String packageName)
+        throws IOException
+    {
+        Package p = Package.getPackage(packageName);
+        if (p != null)
+            return true;
+        ArrayList<String> paths = new ArrayList<String>();
+        paths.add("java/lang/String.class");
+        for (String s : System.getProperty("java.class.path").split(System.getProperty("path.separator")))
+        {
+            if (!paths.contains(s))
+                paths.add(s);
+        }
+
+        packageName = packageName.replace(".", "/");
+
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        for (String s : paths)
+        {
+            URL url = classLoader.getResource(s + "/" + packageName);
+            if (url != null)
+                return true;
+            else
+                url = classLoader.getResource(s);
+            if (url == null)
+                continue;
+
+            String filename = URLDecoder.decode(url.getFile(), "UTF-8");
+
+            if (url.getProtocol().equals("jar"))
+            {
+                filename = filename.substring(5, filename.indexOf("!"));
+
+                JarFile jf = new JarFile(filename);
+                Enumeration<JarEntry> entries = jf.entries();
+                while (entries.hasMoreElements())
+                {
+                    String name = entries.nextElement().getName();
+                    if (name.startsWith(packageName))
+                    {
+                        return true;
+                    }
+                }
+            }
+            else
+            {
+                File folder = new File(filename);
+                return folder.exists();
+            }
+        }
+        return false;
+    }
+
+    private static void completePackage(String packageName)
+        throws IOException
+    {
+        ArrayList<String> paths = new ArrayList<String>();
+        paths.add("java/lang/String.class");
+        for (String s : System.getProperty("java.class.path").split(System.getProperty("path.separator")))
+        {
+            if (!paths.contains(s))
+                paths.add(s);
+        }
+
+        packageName = packageName.replace(".", "/");
+
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        for (String s : paths)
+        {
+            URL url = null;
+            if (s.endsWith(".class"))
+                url = classLoader.getResource(s);
+            else
+            {
+                String path = "file://" + new File(s).getAbsolutePath();
+                if (path.endsWith(".jar"))
+                {
+                    path = "jar:" + path + "!/" + packageName;
+                }
+                else
+                {
+                    path += "/" + packageName;
+                }
+                try
+                {
+                    System.err.println("path: " + path);
+                    url = new URL(path);
+                }
+                catch (Exception e)
+                {}
+            }
+            if (url == null)
+                continue;
+            System.err.println("s: " + s);
+            System.err.println("packagename: " + packageName);
+            System.err.println("url: " + url);
+
+            String filename = URLDecoder.decode(url.getFile(), "UTF-8");
+            if (url.getProtocol().equals("jar"))
+            {
+                filename = filename.substring(5, filename.indexOf("!"));
+
+                JarFile jf = new JarFile(filename);
+                Enumeration<JarEntry> entries = jf.entries();
+                while (entries.hasMoreElements())
+                {
+                    String name = entries.nextElement().getName();
+                    if (name.startsWith(packageName))
+                    {
+                        name = name.substring(packageName.length()+1);
+                        int idx = name.indexOf('/');
+                        if (idx != -1)
+                        {
+                            name = name.substring(0, idx);
+                            System.out.println(name + "\tpackage" + sep + name);
+                            continue;
+                        }
+                        name = name.replace(".class", "").replace('/', '.');
+                        System.out.println(name + "\tclass" + sep + name);
+                    }
+                }
+            }
+            else
+            {
+                File folder = new File(filename);
+                File[] files = folder.listFiles();
+                if (files == null)
+                    continue;
+                for (File f : files)
+                {
+                    String name = f.getName();
+                    if (name.endsWith(".class"))
+                    {
+                        name = name.substring(0, name.length()-6);
+                        System.out.println(name + "\tclass" + sep + name);
+                    }
+                }
+            }
+        }
+    }
+
     public static void main(String... unusedargs)
     {
         try
@@ -329,6 +470,9 @@ public class SublimeJava
                                 if (found)
                                     break;
                             }
+                            // Nothing yet.. Is it a package by any chance?
+                            if (isPackage(args[1]))
+                                System.out.println(args[1]);
                             continue;
                         }
                         if (args.length < 2)
@@ -378,6 +522,17 @@ public class SublimeJava
                     }
                     catch (ClassNotFoundException x)
                     {
+                        // Maybe it's a package then?
+                        if (args[0].equals("-complete"))
+                        {
+                            completePackage(args[1]);
+                        }
+                        else if (args[0].equals("-returntype"))
+                        {
+                            String name = args[1] + "." + args[2];
+                            if (isPackage(name))
+                                System.out.println(name);
+                        }
                     }
                 }
                 catch (Exception e)
