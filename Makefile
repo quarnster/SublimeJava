@@ -1,5 +1,7 @@
-all: release
+all: clean release
 
+clean:
+	rm -rf release
 
 release:
 	mkdir release
