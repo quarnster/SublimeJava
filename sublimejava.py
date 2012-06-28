@@ -99,6 +99,11 @@ class SublimeJavaCompletion(completioncommon.CompletionCommon):
         classpath = "."
         if self.javaseparator != None:
             classpath = self.get_setting("sublimejava_classpath", ["."])
+            newclasspath = []
+            window = sublime.active_window()
+            for path in classpath:
+                newclasspath.append(self.expand_path(path, window))
+            classpath = newclasspath
             classpath.insert(0, ".")
             classpath = self.javaseparator.join(classpath)
         return "java -classpath %s SublimeJava" % classpath
