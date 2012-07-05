@@ -408,11 +408,6 @@ public class SublimeJava
                             System.err.println("quitting upon request");
                             return;
                         }
-                        else if (args[0].equals("-separator"))
-                        {
-                            System.out.println(System.getProperty("path.separator"));
-                            continue;
-                        }
                         else if (args[0].equals("-findclass"))
                         {
                             String line = null;

@@ -59,8 +59,6 @@ class SublimeJavaDotComplete(completioncommon.CompletionCommonDotComplete):
 class SublimeJavaCompletion(completioncommon.CompletionCommon):
     def __init__(self):
         super(SublimeJavaCompletion, self).__init__("SublimeJava.sublime-settings", os.path.dirname(os.path.abspath(__file__)))
-        self.javaseparator = None  # just so that get_cmd references it. It's set "for real" later
-        self.javaseparator = self.run_completion("-separator").strip()
         self.regex = [
             (re.compile(r"\[I([,)}]|$)"), r"int[]\1"),
             (re.compile(r"\[F([,)}]|$)"), r"float[]\1"),
@@ -96,16 +94,14 @@ class SublimeJavaCompletion(completioncommon.CompletionCommon):
         return packages
 
     def get_cmd(self):
-        classpath = "."
-        if self.javaseparator != None:
-            classpath = self.get_setting("sublimejava_classpath", ["."])
-            newclasspath = []
-            window = sublime.active_window()
-            for path in classpath:
-                newclasspath.append(self.expand_path(path, window))
-            classpath = newclasspath
-            classpath.insert(0, ".")
-            classpath = self.javaseparator.join(classpath)
+        classpath = self.get_setting("sublimejava_classpath", ["."])
+        newclasspath = []
+        window = sublime.active_window()
+        for path in classpath:
+            newclasspath.append(self.expand_path(path, window))
+        classpath = newclasspath
+        classpath.insert(0, ".")
+        classpath = os.pathsep.join(classpath)
         return "java -classpath %s SublimeJava" % classpath
 
     def is_supported_language(self, view):
