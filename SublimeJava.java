@@ -334,6 +334,7 @@ public class SublimeJava
             System.err.println("url: " + url);
 
             String filename = URLDecoder.decode(url.getFile(), "UTF-8");
+            ArrayList<String> packages = new ArrayList<String>();
             if (url.getProtocol().equals("jar"))
             {
                 filename = filename.substring(5, filename.indexOf("!"));
@@ -350,7 +351,11 @@ public class SublimeJava
                         if (idx != -1)
                         {
                             name = name.substring(0, idx);
-                            System.out.println(name + "\tpackage" + sep + name);
+                            if (!packages.contains(name))
+                            {
+                                packages.add(name);
+                                System.out.println(name + "\tpackage" + sep + name);
+                            }
                             continue;
                         }
                         name = name.replace(".class", "").replace('/', '.');
@@ -371,6 +376,10 @@ public class SublimeJava
                     {
                         name = name.substring(0, name.length()-6);
                         System.out.println(name + "\tclass" + sep + name);
+                    }
+                    else if (f.isDirectory())
+                    {
+                        System.out.println(name + "\tpackage" + sep + name);
                     }
                 }
             }
