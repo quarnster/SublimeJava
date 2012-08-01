@@ -79,7 +79,7 @@ class SublimeJavaCompletion(completioncommon.CompletionCommon):
             if idx == -1:
                 idx = len(type)
             subtype = type[:idx]
-            if re.search("%s$" % subtype, package):
+            if re.search("[\.\$]{1}%s$" % subtype, package):
                 # Explicit imports, we want these to have the highest
                 # priority when searching for the absolute type, so
                 # insert them at the top of the package list.
