@@ -149,6 +149,16 @@ class SublimeJava(sublime_plugin.EventListener):
 
 pathtofull = lambda path: '.'.join(path.split('/'))
 
+def scan_src_dir(base):
+    for d, dns, fns in os.walk(base):
+        try:
+            dns.remove('.svn')
+        except:
+            pass
+        package = pathtofull(d[len(base) + 1:]) + "."
+        for fn in fns:
+            yield package + fn.split('.')[0], d + "/" + fn
+
 def scan_doc_dir(base):
     for d, dns, fns in os.walk(base):
         try:
@@ -177,9 +187,19 @@ class OpenJavaClassCommand(sublime_plugin.WindowCommand):
 
     def run(self):
         options = []
-        for d in self.get_setting("sublimejava_docpath", ""):
-            options.extend(scan_doc_dir(d))
+        for path in self.get_setting("sublimejava_docpath", ""):
+            path = os.path.abspath(os.path.expanduser(path))
+            if os.path.isdir(path) and 'docs' in path:
+                options.extend(scan_doc_dir(path))
+            elif os.path.isdir(path) and 'src' in path:
+                options.extend(scan_src_dir(path))
+            else:
+                print "Don't know how to handle", path
         def x(result):
             if result != -1:
-                subprocess.check_call(['open', options[result][1]])
+                fn = options[result][1]
+                if fn.endswith('.java'):
+                    self.window.open_file(fn)
+                else:
+                    subprocess.check_call(['open', fn])
         self.window.show_quick_panel([t[0] for t in options], x)
