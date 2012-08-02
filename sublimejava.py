@@ -131,6 +131,11 @@ class SublimeJavaCompletion(completioncommon.CompletionCommon):
             ret.append((self.fixnames(display), self.fixnames(insert)))
         return super(SublimeJavaCompletion, self).return_completions(ret)
 
+    def get_class_under_cursor(self, view):
+        data = view.substr(sublime.Region(0,view.size()))
+        word = view.substr(view.word(view.sel()[0].begin()))
+        return self.find_absolute_of_type(data, data, word)
+
 comp = SublimeJavaCompletion()
 
 
@@ -147,9 +152,12 @@ class SublimeJava(sublime_plugin.EventListener):
         else:
             return comp.on_query_context(view, key, operator, operand, match_all)
 
-pathtofull = lambda path: '.'.join(path.split('/'))
 
-def scan_doc_dir(base):
+pathtofull = lambda path: '.'.join(path.split('/'))
+rmdollar = lambda classname: classname.replace('$$', '.')
+
+def scan_doc_dir(base, classname=None):
+    search_cn = None if classname is None else rmdollar(classname)
     for d, dns, fns in os.walk(base):
         try:
             dns.remove('class-use')
@@ -160,7 +168,10 @@ def scan_doc_dir(base):
             # - gets all the java overview bidness
             if not fn.endswith('.html') or '-' in fn or fn == 'index.html':
                 continue
-            yield package + fn[:-5].replace('$$', '.'), d + "/" + fn
+            cn = rmdollar(package + fn[:-5])
+            if search_cn is not None and cn != search_cn:
+                continue
+            yield cn, d + "/" + fn
 
 class OpenJavaClassCommand(sublime_plugin.WindowCommand):
     def get_settings(self):
@@ -175,11 +186,18 @@ class OpenJavaClassCommand(sublime_plugin.WindowCommand):
             pass
         return self.get_settings().get(key, default)
 
-    def run(self):
+    def run(self, under_cursor=False):
+        classname = comp.get_class_under_cursor(self.window.active_view()) if under_cursor else None
+
         options = []
         for d in self.get_setting("sublimejava_docpath", ""):
-            options.extend(scan_doc_dir(d))
+            options.extend(scan_doc_dir(d, classname))
+
         def x(result):
             if result != -1:
                 subprocess.check_call(['open', options[result][1]])
-        self.window.show_quick_panel([t[0] for t in options], x)
+
+        if classname is not None and len(options) == 1:
+            x(0)
+        else:
+            self.window.show_quick_panel([t[0] for t in options], x)
