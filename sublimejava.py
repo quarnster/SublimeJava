@@ -156,8 +156,22 @@ class SublimeJava(sublime_plugin.EventListener):
 pathtofull = lambda path: '.'.join(path.split('/'))
 rmdollar = lambda classname: classname.replace('$$', '.')
 
+def scan_src_dir(base, classname=None):
+    for d, dns, fns in os.walk(base):
+        try:
+            dns.remove('.svn')
+        except:
+            pass
+        package = pathtofull(d[len(base) + 1:]) + "."
+        for fn in fns:
+            cn = package + fn.split('.')[0]
+            if classname is not None and cn != classname:
+                continue
+            yield cn, d + "/" + fn
+
 def scan_doc_dir(base, classname=None):
     search_cn = None if classname is None else rmdollar(classname)
+
     for d, dns, fns in os.walk(base):
         try:
             dns.remove('class-use')
@@ -190,12 +204,21 @@ class OpenJavaClassCommand(sublime_plugin.WindowCommand):
         classname = comp.get_class_under_cursor(self.window.active_view()) if under_cursor else None
 
         options = []
-        for d in self.get_setting("sublimejava_docpath", ""):
-            options.extend(scan_doc_dir(d, classname))
-
+        for path in self.get_setting("sublimejava_docpath", ""):
+            path = os.path.abspath(os.path.expanduser(path))
+            if os.path.isdir(path) and 'docs' in path:
+                options.extend(scan_doc_dir(path, classname))
+            elif os.path.isdir(path) and 'src' in path:
+                options.extend(scan_src_dir(path, classname))
+            else:
+                print "Don't know how to handle", path
         def x(result):
             if result != -1:
-                subprocess.check_call(['open', options[result][1]])
+                fn = options[result][1]
+                if fn.endswith('.java'):
+                    self.window.open_file(fn)
+                else:
+                    subprocess.check_call(['open', fn])
 
         if classname is not None and len(options) == 1:
             x(0)

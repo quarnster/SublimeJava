@@ -17,7 +17,7 @@
     // Replacement is done sequentially, first all ${project_path:} are resolved, then ${home} and
     // ${env:<variable>} tokens,  and then the ${folder:} are replaced,
     "sublimejava_classpath": ["/Users/quarnster/android/android-sdk-mac_86/platforms/android-14/android.jar"],
-    "sublimejava_docpath": ["/Users/charlie/dev/docs/guava-12.0"],
+    "sublimejava_docpath": ["~/dev/docs/guava-12.0","~/dev/narya/core/src/main/java"],
 
     "sublimejava_dotcomplete": true,
 
