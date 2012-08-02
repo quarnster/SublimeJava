@@ -22,7 +22,9 @@ freely, subject to the following restrictions:
 """
 import sublime
 import sublime_plugin
+import os
 import os.path
+import subprocess
 import re
 try:
     from sublimecompletioncommon import completioncommon
@@ -144,3 +146,40 @@ class SublimeJava(sublime_plugin.EventListener):
             return comp.is_supported_language(view)
         else:
             return comp.on_query_context(view, key, operator, operand, match_all)
+
+pathtofull = lambda path: '.'.join(path.split('/'))
+
+def scan_doc_dir(base):
+    for d, dns, fns in os.walk(base):
+        try:
+            dns.remove('class-use')
+        except:
+            pass
+        package = pathtofull(d[len(base) + 1:]) + "."
+        for fn in fns:
+            # - gets all the java overview bidness
+            if not fn.endswith('.html') or '-' in fn or fn == 'index.html':
+                continue
+            yield package + fn[:-5].replace('$$', '.'), d + "/" + fn
+
+class OpenJavaClassCommand(sublime_plugin.WindowCommand):
+    def get_settings(self):
+        return sublime.load_settings("SublimeJava.sublime-settings")
+
+    def get_setting(self, key, default=None):
+        try:
+            s = sublime.active_window().active_view().settings()
+            if s.has(key):
+                return s.get(key)
+        except:
+            pass
+        return self.get_settings().get(key, default)
+
+    def run(self):
+        options = []
+        for d in self.get_setting("sublimejava_docpath", ""):
+            options.extend(scan_doc_dir(d))
+        def x(result):
+            if result != -1:
+                subprocess.check_call(['open', options[result][1]])
+        self.window.show_quick_panel([t[0] for t in options], x)
