@@ -24,8 +24,8 @@ import sublime
 import sublime_plugin
 import os
 import os.path
-import subprocess
 import re
+import webbrowser
 try:
     from sublimecompletioncommon import completioncommon
     reload(completioncommon)
@@ -218,7 +218,7 @@ class OpenJavaClassCommand(sublime_plugin.WindowCommand):
                 if fn.endswith('.java'):
                     self.window.open_file(fn)
                 else:
-                    subprocess.check_call(['open', fn])
+                    webbrowser.open_new(fn)
 
         if classname is not None and len(options) == 1:
             x(0)
