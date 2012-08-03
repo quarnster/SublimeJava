@@ -167,7 +167,7 @@ def scan_src_dir(base, classname=None):
             cn = package + fn.split('.')[0]
             if classname is not None and cn != classname:
                 continue
-            yield cn, d + "/" + fn
+            yield "src: " + cn, d + "/" + fn
 
 def scan_doc_dir(base, classname=None):
     search_cn = None if classname is None else rmdollar(classname)
@@ -185,7 +185,7 @@ def scan_doc_dir(base, classname=None):
             cn = rmdollar(package + fn[:-5])
             if search_cn is not None and cn != search_cn:
                 continue
-            yield cn, d + "/" + fn
+            yield "doc: " + cn, d + "/" + fn
 
 class OpenJavaClassCommand(sublime_plugin.WindowCommand):
     def get_settings(self):
