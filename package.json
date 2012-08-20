@@ -6,11 +6,11 @@
             "description": "Java completions for Sublime Text 2",
             "author": "Fredrik Ehnbom (quarnster)",
             "homepage": "http://github.com/quarnster/SublimeJava",
-            "last_modified": "2012-08-01 05:55:00",
+            "last_modified": "2012-08-20 16:35:00",
             "platforms": {
                 "*": [
                     {
-                        "version": "1.1.11",
+                        "version": "1.1.12",
                         "url": "http://cloud.github.com/downloads/quarnster/SublimeJava/SublimeJava.sublime-package"
                     }
                 ]
