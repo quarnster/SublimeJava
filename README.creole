@@ -21,7 +21,7 @@ Please go [[https://github.com/quarnster/SublimeJava/issues?sort=created&directi
     * You most likely want to configure the "sublimejava_classpath" setting to your own, issue [[https://github.com/quarnster/SublimeJava/issues/23|23]] details how this is done.
 
 === Usage ===
-Once installed it'll try to provide reasonable completion suggestions when you trigger autocompletion.
+Once installed it'll try to provide reasonable completion suggestions when you trigger autocompletion. Please note that it accomplishes this with the use of [[http://docs.oracle.com/javase/tutorial/reflect/index.html|reflection]] so it can only complete compiled classes that are in your classpath.
 
 === License ===
 This plugin is using the zlib license

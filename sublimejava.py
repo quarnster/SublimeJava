@@ -104,7 +104,7 @@ class SublimeJavaCompletion(completioncommon.CompletionCommon):
         classpath = newclasspath
         classpath.insert(0, ".")
         classpath = os.pathsep.join(classpath)
-        return "java -classpath %s SublimeJava" % classpath
+        return "java -classpath \"%s\" SublimeJava" % classpath
 
     def is_supported_language(self, view):
         if view.is_scratch() or not self.get_setting("sublimejava_enabled", True):
