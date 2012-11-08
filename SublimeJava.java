@@ -539,6 +539,11 @@ public class SublimeJava
                         }
                     }
                 }
+                catch (Error e)
+                {
+                    System.err.println("Error caught: " + e.getMessage());
+                    e.printStackTrace(System.err);
+                }
                 catch (Exception e)
                 {
                     System.err.println("Exception caught: " + e.getMessage());

@@ -24,33 +24,8 @@ import sublime
 import sublime_plugin
 import os.path
 import re
-try:
-    from sublimecompletioncommon import completioncommon
-    reload(completioncommon)
-except:
-    def hack(func):
-        # If there's a sublime.error_message before a window is open
-        # on Windows 7, it appears the main editor window
-        # is never opened...
-        class hackClass:
-            def __init__(self, func):
-                self.func = func
-                self.try_now()
-
-            def try_now(self):
-                if sublime.active_window() == None:
-                    sublime.set_timeout(self.try_now, 500)
-                else:
-                    self.func()
-        hackClass(func)
-
-    def showError():
-        sublime.error_message("""\
-Unfortunately SublimeJava currently can't be installed \
-via Package Control at the moment. Please see http://www.github.com/quarnster/SublimeJava \
-for more details.""")
-    hack(showError)
-
+from sublimecompletioncommon import completioncommon
+reload(completioncommon)
 
 class SublimeJavaDotComplete(completioncommon.CompletionCommonDotComplete):
     pass
@@ -69,6 +44,12 @@ class SublimeJavaCompletion(completioncommon.CompletionCommon):
             (re.compile(r"\[J([,)}]|$)"), r"long[]\1"),
             (re.compile(r"\[D([,)}]|$)"), r"double[]\1"),
             (re.compile(r"\[\L?([\w\./]+)(;)?"), r"\1[]")]
+
+    def show_error(self, msg):
+        if self.get_setting("sublimejava_no_visual_errors", False):
+            print msg
+        else:
+            sublime.error_message(msg + "\n\nDisable visual error message dialogues with setting:\nsublimejava_no_visual_errors: true")
 
     def get_packages(self, data, thispackage, type):
         packages = re.findall(r"(?:^|\n)[ \t]*import[ \t]+(.*);", data)
