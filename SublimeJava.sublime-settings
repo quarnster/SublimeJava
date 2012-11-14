@@ -16,7 +16,7 @@
     //
     // Replacement is done sequentially, first all ${project_path:} are resolved, then ${home} and
     // ${env:<variable>} tokens,  and then the ${folder:} are replaced,
-    "sublimejava_classpath": ["/Users/quarnster/android/android-sdk-mac_86/platforms/android-14/android.jar"],
+    "sublimejava_classpath": [],
     "sublimejava_docpath": ["~/dev/docs/guava-12.0","~/dev/narya/core/src/main/java"],
 
     "sublimejava_dotcomplete": true,
@@ -28,5 +28,9 @@
 
     // When set to true will shorten class names in the completion list
     // by removing the package name.
-    "completioncommon_shorten_names": true
+    "completioncommon_shorten_names": true,
+
+    // Set to true to not display a visual error message box when an
+    // error or exception occurs
+    "sublimejava_no_visual_errors": false
 }

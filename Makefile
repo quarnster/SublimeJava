@@ -1,4 +1,10 @@
-all: clean release
+SCRIPT=import json; print json.load(open('package.json'))['packages'][0]['platforms']['*'][0]['version']
+VERSION=$(shell python -c "$(SCRIPT)")
+
+all: clean SublimeJava.class release
+
+SublimeJava.class: SublimeJava.java
+	javac -source 1.5 -target 1.5 SublimeJava.java
 
 clean:
 	rm -rf release
@@ -11,4 +17,4 @@ release:
 	find release -name "*.pyc" -exec rm {} \;
 	find release -name "unittest*" -exec rm -f {} \;
 	rm -f release/Makefile
-	cd release && zip -r SublimeJava.sublime-package *
+	cd release && zip -r SublimeJava-$(VERSION).sublime-package *
