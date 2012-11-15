@@ -23,12 +23,13 @@ freely, subject to the following restrictions:
 import sublime
 import sublime_plugin
 import os
-import os.path
 import re
-import webbrowser
 
 from sublimecompletioncommon import completioncommon
 reload(completioncommon)
+
+import classopener
+reload(classopener)
 
 class SublimeJavaDotComplete(completioncommon.CompletionCommonDotComplete):
     pass
@@ -133,76 +134,14 @@ class SublimeJava(sublime_plugin.EventListener):
             return comp.is_supported_language(view)
         else:
             return comp.on_query_context(view, key, operator, operand, match_all)
+       
 
-
-pathtofull = lambda path: '.'.join(path.split('/'))
-rmdollar = lambda classname: classname.replace('$$', '.')
-
-def scan_src_dir(base, classname=None):
-    for d, dns, fns in os.walk(base):
-        try:
-            dns.remove('.svn')
-        except:
-            pass
-        package = pathtofull(d[len(base) + 1:]) + "."
-        for fn in fns:
-            cn = package + fn.split('.')[0]
-            if classname is not None and cn != classname:
-                continue
-            yield "src: " + cn, d + "/" + fn
-
-def scan_doc_dir(base, classname=None):
-    search_cn = None if classname is None else rmdollar(classname)
-
-    for d, dns, fns in os.walk(base):
-        try:
-            dns.remove('class-use')
-        except:
-            pass
-        package = pathtofull(d[len(base) + 1:]) + "."
-        for fn in fns:
-            # - gets all the java overview bidness
-            if not fn.endswith('.html') or '-' in fn or fn == 'index.html':
-                continue
-            cn = rmdollar(package + fn[:-5])
-            if search_cn is not None and cn != search_cn:
-                continue
-            yield "doc: " + cn, d + "/" + fn
-
-class OpenJavaClassCommand(sublime_plugin.WindowCommand):
-    def get_settings(self):
-        return sublime.load_settings("SublimeJava.sublime-settings")
-
-    def get_setting(self, key, default=None):
-        try:
-            s = sublime.active_window().active_view().settings()
-            if s.has(key):
-                return s.get(key)
-        except:
-            pass
-        return self.get_settings().get(key, default)
+class OpenJavaSourceCommand(sublime_plugin.WindowCommand):
 
     def run(self, under_cursor=False):
-        classname = comp.get_class_under_cursor(self.window.active_view()) if under_cursor else None
+        classopener.JavaSourceOpener(comp, self.window.active_view(), under_cursor).show()
 
-        options = []
-        for path in self.get_setting("sublimejava_docpath", ""):
-            path = os.path.abspath(os.path.expanduser(path))
-            if os.path.isdir(path) and 'docs' in path:
-                options.extend(scan_doc_dir(path, classname))
-            elif os.path.isdir(path) and 'src' in path:
-                options.extend(scan_src_dir(path, classname))
-            else:
-                print "Don't know how to handle", path
-        def x(result):
-            if result != -1:
-                fn = options[result][1]
-                if fn.endswith('.java'):
-                    self.window.open_file(fn)
-                else:
-                    webbrowser.open_new(fn)
+class OpenJavaDocCommand(sublime_plugin.WindowCommand):
 
-        if classname is not None and len(options) == 1:
-            x(0)
-        else:
-            self.window.show_quick_panel([t[0] for t in options], x)
+    def run(self, under_cursor=False):
+        classopener.JavaDocOpener(comp, self.window.active_view(), under_cursor).show()
