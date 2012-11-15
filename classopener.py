@@ -62,6 +62,8 @@ class JavaSourceOpener(JavaClassOpener):
                 pass
             package = path_to_full(root_name[len(base) + 1:]) + "."
             for filename in filenames:
+                if not filename.endswith(".java"):
+                    continue
                 classname = package + filename.split('.')[0]
                 if classname_to_find is not None and classname != classname_to_find:
                     continue
