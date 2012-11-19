@@ -1,2 +1,24 @@
 [
+    {
+        "caption": "Java: Open Java Source",
+        "command": "open_java_source"
+    },
+    {
+      "caption": "Java: Open Java Source Under Cursor",
+      "command": "open_java_source",
+      "args": {
+        "under_cursor": true
+      }
+    },
+    {
+        "caption": "Java: Open Javadoc",
+        "command": "open_java_doc"
+    },
+    {
+      "caption": "Java: Open Javadoc for Class Under Cursor",
+      "command": "open_java_doc",
+      "args": {
+        "under_cursor": true
+      }
+    }
 ]
