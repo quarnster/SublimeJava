@@ -4,6 +4,7 @@ import webbrowser
 path_to_full = lambda path: '.'.join(path.split('/'))
 remove_dollar = lambda classname: classname.replace('$$', '.')
 
+
 class JavaClassOpener(object):
 
     def __init__(self, completion, view, under_cursor, setting_name):
@@ -13,23 +14,23 @@ class JavaClassOpener(object):
         self.under_cursor = under_cursor
         self.setting_name = setting_name
 
-    def __get_settings(self):
+    def _get_settings(self):
         return self.command.sublime.load_settings("SublimeJava.sublime-settings")
 
-    def __get_setting(self, key, default=None):
+    def _get_setting(self, key, default=None):
         try:
             settings = self.view.settings()
             if settings.has(key):
                 return settings.get(key)
         except:
             pass
-        return self.__get_settings().get(key, default)
+        return self._get_settings().get(key, default)
 
     def show(self):
         classname = self.completion.get_class_under_cursor(self.view) if self.under_cursor else None
 
         options = []
-        for path in self.__get_setting(self.setting_name, ""):
+        for path in self._get_setting(self.setting_name, ""):
             path = os.path.abspath(self.completion.expand_path(path, self.window))
             options.extend(self._scan_dir(path, classname))
 
