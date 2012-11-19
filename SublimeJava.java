@@ -409,14 +409,27 @@ public class SublimeJava
             }
         }
 
-        Set<String> possibleImports = importMap.get(classname);
-        if (possibleImports != null) 
+        if (classname != null)
         {
-            for (String impClass : possibleImports) 
+            Set<String> possibleImports = importMap.get(classname);
+            if (possibleImports != null) 
             {
-                System.out.println(impClass);
+                for (String impClass : possibleImports) 
+                {
+                    System.out.println(impClass);
+                }
             }
         }
+        else
+        {
+            for (Set<String> imports : importMap.values()) {
+                for (String impClass : imports)
+                {
+                    System.out.println(impClass);
+                }
+            }
+        }
+        
     }
 
     private static void completePackage(String packageName) 
@@ -518,8 +531,12 @@ public class SublimeJava
                             return;
                         }
                         else if (args[0].equals("-possibleimports"))
-                        {
-                            getPossibleImports(args[1]);
+                        {   
+                            String arg = null;
+                            if (args.length > 1) {
+                                arg = args[1];
+                            }
+                            getPossibleImports(arg);
                             continue;
                         }
                         else if (args[0].equals("-findclass"))

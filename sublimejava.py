@@ -30,7 +30,6 @@ reload(completioncommon)
 class SublimeJavaDotComplete(completioncommon.CompletionCommonDotComplete):
     pass
 
-
 class SublimeJavaCompletion(completioncommon.CompletionCommon):
     def __init__(self):
         super(SublimeJavaCompletion, self).__init__("SublimeJava.sublime-settings", os.path.dirname(os.path.abspath(__file__)))
@@ -118,9 +117,12 @@ class SublimeJavaCompletion(completioncommon.CompletionCommon):
 
     def get_possible_imports(self, classname):
         imports = []
-        if self.get_class_under_cursor() == classname:
-            stdout = self.run_completion("-possibleimports;;--;;%s" % classname)
+
+        if classname is None or self.get_class_under_cursor() == classname:
+            classname_str = classname if classname is not None else ""
+            stdout = self.run_completion("-possibleimports;;--;;%s" % classname_str)
             imports = sorted(stdout.split("\n")[:-1])
+
         return imports
         
 
@@ -143,13 +145,14 @@ class SublimeJava(sublime_plugin.EventListener):
 
 class ImportJavaClassCommand(sublime_plugin.TextCommand):
     
-    def run(self, edit):
+    def run(self, edit, under_cursor=False):
         view = self.view
-        classname = view.substr(view.word(view.sel()[0].begin()))
+        classname = view.substr(view.word(view.sel()[0].begin())) if under_cursor else None
         imports = comp.get_possible_imports(classname);
 
         def do_import(index):
-            self._insert_import(imports[index], edit)
+            if index != -1:
+                self._insert_import(imports[index], edit)
 
         if len(imports) == 1:
             do_import(0)
