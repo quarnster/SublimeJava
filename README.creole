@@ -1,5 +1,5 @@
 === Description ===
-A plugin that provides an Java code completion view inside of Sublime Text 2.
+A plugin that provides a Java code completion view inside of Sublime Text 2.  You can also include imports by completion, quick panel, or search for class under cursor.
 
 === Known issues and feature requests ===
 Please go [[https://github.com/quarnster/SublimeJava/issues?sort=created&direction=desc&state=open|here]] to see the currently known issues and feature request, or to file a new.
