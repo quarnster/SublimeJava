@@ -27,7 +27,7 @@ class JavaClassOpener(object):
         return self._get_settings().get(key, default)
 
     def show(self):
-        classname = self.completion.get_class_under_cursor(self.view) if self.under_cursor else None
+        classname = self.completion.get_class_under_cursor() if self.under_cursor else None
 
         options = []
         for path in self._get_setting(self.setting_name, ""):

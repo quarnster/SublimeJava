@@ -114,7 +114,8 @@ class SublimeJavaCompletion(completioncommon.CompletionCommon):
             ret.append((self.fixnames(display), self.fixnames(insert)))
         return super(SublimeJavaCompletion, self).return_completions(ret)
 
-    def get_class_under_cursor(self, view):
+    def get_class_under_cursor(self):
+        view = sublime.active_window().active_view()
         data = view.substr(sublime.Region(0,view.size()))
         word = view.substr(view.word(view.sel()[0].begin()))
         return self.find_absolute_of_type(data, data, word)
