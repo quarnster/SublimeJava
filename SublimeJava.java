@@ -285,12 +285,14 @@ public class SublimeJava
     private static Map<String, Set<String>> importMap = new HashMap<String, Set<String>>();
     private static final String CLASS_NAME_RE = "(?:$|.)?(\\w+).class";
     private static final String DIGITS_CLASS_NAME_RE = "\\d+";
+    private static final String SUBLIME_JAVA_CLASS_RE = "SublimeJava";
 
-    private static Pattern classnamePattern, digitsClassnamePattern;
+    private static Pattern classnamePattern, digitsClassnamePattern, sublimeJavaClassPattern;
     static 
     {
         classnamePattern = Pattern.compile(CLASS_NAME_RE);
         digitsClassnamePattern = Pattern.compile(DIGITS_CLASS_NAME_RE);
+        sublimeJavaClassPattern = Pattern.compile(SUBLIME_JAVA_CLASS_RE);
     }
 
     private static void addToImportMap(String classFileName)
@@ -414,22 +416,26 @@ public class SublimeJava
             Set<String> possibleImports = importMap.get(classname);
             if (possibleImports != null) 
             {
-                for (String impClass : possibleImports) 
-                {
-                    System.out.println(impClass);
-                }
+                printImports(possibleImports);
             }
         }
         else
         {
             for (Set<String> imports : importMap.values()) {
-                for (String impClass : imports)
-                {
-                    System.out.println(impClass);
-                }
+                printImports(imports);
             }
         }
         
+    }
+
+    private static void printImports(Set<String> imports) {
+        for (String impClass : imports)
+        {
+            if (!sublimeJavaClassPattern.matcher(impClass).matches())
+            {
+                System.out.println(impClass);
+            }
+        }
     }
 
     private static void completePackage(String packageName) 
