@@ -1,6 +1,6 @@
 [
     {
-        "caption": "Import Java Class Under Cursor",
+        "caption": "Java: Import Class Under Cursor",
         "command": "import_java_class"
     }
 ]
