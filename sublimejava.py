@@ -22,10 +22,14 @@ freely, subject to the following restrictions:
 """
 import sublime
 import sublime_plugin
-import os.path
+import os
 import re
+
 from sublimecompletioncommon import completioncommon
 reload(completioncommon)
+
+import classopener
+reload(classopener)
 
 class SublimeJavaDotComplete(completioncommon.CompletionCommonDotComplete):
     pass
@@ -178,3 +182,14 @@ class ImportJavaClassCommand(sublime_plugin.TextCommand):
                 newlines_append = 0
         import_statement = "%simport %s;%s" % ("\n" * newlines_prepend, full_classname.replace("$", "."), "\n" * newlines_append)
         self.view.insert(edit, insert_point, import_statement)
+       
+
+class OpenJavaSourceCommand(sublime_plugin.WindowCommand):
+
+    def run(self, under_cursor=False):
+        classopener.JavaSourceOpener(comp, self.window.active_view(), under_cursor).show()
+
+class OpenJavaDocCommand(sublime_plugin.WindowCommand):
+
+    def run(self, under_cursor=False):
+        classopener.JavaDocOpener(comp, self.window.active_view(), under_cursor).show()
