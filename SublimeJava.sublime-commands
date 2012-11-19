@@ -1,10 +1,10 @@
 [
     {
-        "caption": "Java: Open Java Source",
+        "caption": "Java: Open Source",
         "command": "open_java_source"
     },
     {
-      "caption": "Java: Open Java Source Under Cursor",
+      "caption": "Java: Open Source Under Cursor",
       "command": "open_java_source",
       "args": {
         "under_cursor": true
