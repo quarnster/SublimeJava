@@ -110,6 +110,20 @@ class SublimeJavaCompletion(completioncommon.CompletionCommon):
             ret.append((self.fixnames(display), self.fixnames(insert)))
         return super(SublimeJavaCompletion, self).return_completions(ret)
 
+    def get_class_under_cursor(self):
+        view = sublime.active_window().active_view()
+        data = view.substr(sublime.Region(0,view.size()))
+        word = view.substr(view.word(view.sel()[0].begin()))
+        return self.find_absolute_of_type(data, data, word)
+
+    def get_possible_imports(self, classname):
+        imports = []
+        if self.get_class_under_cursor() == classname:
+            stdout = self.run_completion("-possibleimports;;--;;%s" % classname)
+            imports = sorted(stdout.split("\n")[:-1])
+        return imports
+        
+
 comp = SublimeJavaCompletion()
 
 
@@ -125,3 +139,39 @@ class SublimeJava(sublime_plugin.EventListener):
             return comp.is_supported_language(view)
         else:
             return comp.on_query_context(view, key, operator, operand, match_all)
+
+
+class ImportJavaClassCommand(sublime_plugin.TextCommand):
+    
+    def run(self, edit):
+        view = self.view
+        classname = view.substr(view.word(view.sel()[0].begin()))
+        imports = comp.get_possible_imports(classname);
+
+        def do_import(index):
+            self._insert_import(imports[index], edit)
+
+        if len(imports) == 1:
+            do_import(0)
+        elif len(imports) > 1:
+            view.window().show_quick_panel(imports, do_import)
+        else:
+            sublime.error_message("No classes found to import for name %s" % classname)
+
+    def _insert_import(self, full_classname, edit):
+        insert_point = 0
+        newlines_prepend = 0
+        newlines_append = 1
+        all_imports = self.view.find_all('import( static)? ([\w\.]+)\.([\w]+|\*);')
+        if len(all_imports) > 0:
+            insert_point = all_imports[-1].b
+            newlines_prepend = 1
+            newlines_append = 0
+        else:
+            package_dec = self.view.find('package ([\w]+.)*\w+;', 0)
+            if package_dec is not None:
+                insert_point = package_dec.b
+                newlines_prepend = 2
+                newlines_append = 0
+        import_statement = "%simport %s;%s" % ("\n" * newlines_prepend, full_classname.replace("$", "."), "\n" * newlines_append)
+        self.view.insert(edit, insert_point, import_statement)

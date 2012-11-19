@@ -242,18 +242,11 @@ public class SublimeJava
         Package p = Package.getPackage(packageName);
         if (p != null)
             return true;
-        ArrayList<String> paths = new ArrayList<String>();
-        paths.add("java/lang/String.class");
-        for (String s : System.getProperty("java.class.path").split(System.getProperty("path.separator")))
-        {
-            if (!paths.contains(s))
-                paths.add(s);
-        }
 
         packageName = packageName.replace(".", "/");
 
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        for (String s : paths)
+        for (String s : getClasspathEntries())
         {
             URL url = classLoader.getResource(s + "/" + packageName);
             if (url != null)
@@ -322,7 +315,7 @@ public class SublimeJava
         }
     }
 
-    protected static String[] getClasspathEntries() 
+    private static String[] getClasspathEntries() 
     {
         Set<String> paths = new HashSet<String>();
         paths.add("java/lang/String.class");
@@ -333,7 +326,7 @@ public class SublimeJava
         return paths.toArray(new String[0]);
     }
 
-    protected static URL getUrlFromClasspathEntry(ClassLoader classLoader, String classpathEntry, String packagePath) 
+    private static URL getUrlFromClasspathEntry(ClassLoader classLoader, String classpathEntry, String packagePath) 
     {
         URL url = null;
         if (classpathEntry.endsWith(".class"))
@@ -360,16 +353,31 @@ public class SublimeJava
         return url;
     }
 
-    protected static void importClass(String classname) 
+    private static Set<File> getClassFilesNotInJar(File current) 
+    {
+        Set<File> classFiles = new HashSet<File>();
+        if (current.isFile() && current.getName().endsWith(".class")) 
+        {
+            classFiles.add(current);
+        }
+        else if (current.isDirectory()) 
+        {
+            for (File file : current.listFiles()) 
+            {
+                classFiles.addAll(getClassFilesNotInJar(file));
+            }
+        }
+        return classFiles;
+    }
+
+    private static void getPossibleImports(String classname) 
         throws IOException
     {
         boolean importMapPopulated = importMap.size() > 0;
 
         if (!importMapPopulated) {
-            String[] paths = getClasspathEntries();
-
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            for (String s : paths)
+            for (String s : getClasspathEntries())
             {
                 URL url = getUrlFromClasspathEntry(classLoader, s, "");
                 if (url == null)
@@ -406,37 +414,18 @@ public class SublimeJava
         {
             for (String impClass : possibleImports) 
             {
-                System.out.println(impClass + "\tclass" + sep + impClass);
+                System.out.println(impClass);
             }
         }
     }
 
-    protected static Set<File> getClassFilesNotInJar(File current) 
-    {
-        Set<File> classFiles = new HashSet<File>();
-        if (current.isFile() && current.getName().endsWith(".class")) 
-        {
-            classFiles.add(current);
-        }
-        else if (current.isDirectory()) 
-        {
-            for (File file : current.listFiles()) 
-            {
-                classFiles.addAll(getClassFilesNotInJar(file));
-            }
-        }
-        return classFiles;
-    }
-
-    protected static void completePackage(String packageName) 
+    private static void completePackage(String packageName) 
         throws IOException
     {
-        String[] paths = getClasspathEntries();
-
         String packagePath = packageName.replace(".", "/");
 
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        for (String s : paths)
+        for (String s : getClasspathEntries())
         {
             URL url = getUrlFromClasspathEntry(classLoader, s, packagePath);
             if (url == null)
@@ -528,9 +517,9 @@ public class SublimeJava
                             System.err.println("quitting upon request");
                             return;
                         }
-                        else if (args[0].equals("-importclass"))
+                        else if (args[0].equals("-possibleimports"))
                         {
-                            importClass(args[1]);
+                            getPossibleImports(args[1]);
                             continue;
                         }
                         else if (args[0].equals("-findclass"))
