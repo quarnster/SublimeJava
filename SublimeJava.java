@@ -304,7 +304,8 @@ public class SublimeJava
             Matcher digitsClassnameMatcher = digitsClassnamePattern.matcher(classname);
             if (!digitsClassnameMatcher.find())
             {
-                if (!importMap.containsKey(classname)) {
+                if (!importMap.containsKey(classname))
+                {
                     importMap.put(classname, new HashSet<String>());
                 }
                 String fullClassname = classFileName.replace("/", ".").replace(".class", "");
@@ -377,7 +378,8 @@ public class SublimeJava
     {
         boolean importMapPopulated = importMap.size() > 0;
 
-        if (!importMapPopulated) {
+        if (!importMapPopulated)
+        {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             for (String s : getClasspathEntries())
             {
@@ -421,14 +423,16 @@ public class SublimeJava
         }
         else
         {
-            for (Set<String> imports : importMap.values()) {
+            for (Set<String> imports : importMap.values())
+            {
                 printImports(imports);
             }
         }
         
     }
 
-    private static void printImports(Set<String> imports) {
+    private static void printImports(Set<String> imports)
+    {
         for (String impClass : imports)
         {
             if (!sublimeJavaClassPattern.matcher(impClass).matches())
@@ -539,7 +543,8 @@ public class SublimeJava
                         else if (args[0].equals("-possibleimports"))
                         {   
                             String arg = null;
-                            if (args.length > 1) {
+                            if (args.length > 1)
+                            {
                                 arg = args[1];
                             }
                             getPossibleImports(arg);
