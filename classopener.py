@@ -14,23 +14,11 @@ class JavaClassOpener(object):
         self.under_cursor = under_cursor
         self.setting_name = setting_name
 
-    def _get_settings(self):
-        return self.command.sublime.load_settings("SublimeJava.sublime-settings")
-
-    def _get_setting(self, key, default=None):
-        try:
-            settings = self.view.settings()
-            if settings.has(key):
-                return settings.get(key)
-        except:
-            pass
-        return self._get_settings().get(key, default)
-
     def show(self):
         classname = self.completion.get_class_under_cursor() if self.under_cursor else None
 
         options = []
-        for path in self._get_setting(self.setting_name, ""):
+        for path in self.completion.get_setting(self.setting_name, ""):
             path = os.path.abspath(self.completion.expand_path(path, self.window))
             options.extend(self._scan_dir(path, classname))
 
