@@ -282,7 +282,6 @@ public class SublimeJava
         return false;
     }
 
-    private static Map<String, Set<String>> importMap = new HashMap<String, Set<String>>();
     private static final String CLASS_NAME_RE = "(?:$|.)?(\\w+).class";
     private static final String DIGITS_CLASS_NAME_RE = "\\d+";
     private static final String SUBLIME_JAVA_CLASS_RE = "SublimeJava";
@@ -295,27 +294,24 @@ public class SublimeJava
         sublimeJavaClassPattern = Pattern.compile(SUBLIME_JAVA_CLASS_RE);
     }
 
-    private static void addToImportMap(String classFileName)
+    private static String getImport(String classFileName, String searchClass)
     {   
         Matcher classnameMatcher = classnamePattern.matcher(classFileName);
         if (classnameMatcher.find())
         {
             String classname = classnameMatcher.group(1);
-            Matcher digitsClassnameMatcher = digitsClassnamePattern.matcher(classname);
-            if (!digitsClassnameMatcher.find())
+            if ((searchClass != null && searchClass.equals(classname)) || 
+                (searchClass == null && !digitsClassnamePattern.matcher(classname).matches()))
             {
-                if (!importMap.containsKey(classname))
-                {
-                    importMap.put(classname, new HashSet<String>());
-                }
                 String fullClassname = classFileName.replace("/", ".").replace(".class", "");
                 if (fullClassname.startsWith("."))
                 {
                     fullClassname = fullClassname.substring(1);
                 }
-                importMap.get(classname).add(fullClassname);
+                return fullClassname;
             }
         }
+        return null;
     }
 
     private static String[] getClasspathEntries() 
@@ -356,90 +352,65 @@ public class SublimeJava
         return url;
     }
 
-    private static Set<File> getClassFilesNotInJar(File current) 
+    private static void printImportsNotInJar(File current, File root, String classname, Set<String> possibleImports) 
     {
-        Set<File> classFiles = new HashSet<File>();
-        if (current.isFile() && current.getName().endsWith(".class")) 
+        Matcher classnameMatcher = classnamePattern.matcher(current.getName());
+        if (current.isFile() && classnameMatcher.matches())
         {
-            classFiles.add(current);
+            if (classname == null || classname.equals(classnameMatcher.group(1)))
+            {
+                String classFileName = current.getAbsolutePath().substring(root.getAbsolutePath().length());
+                printPossibleImport(getImport(classFileName, classname), possibleImports);
+            }
         }
         else if (current.isDirectory()) 
         {
             for (File file : current.listFiles()) 
             {
-                classFiles.addAll(getClassFilesNotInJar(file));
+                printImportsNotInJar(file, root, classname, possibleImports);
             }
         }
-        return classFiles;
     }
 
     private static void getPossibleImports(String classname) 
         throws IOException
     {
-        boolean importMapPopulated = importMap.size() > 0;
-
-        if (!importMapPopulated)
+        Set<String> possibleImports = new HashSet<String>();
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        for (String s : getClasspathEntries())
         {
-            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            for (String s : getClasspathEntries())
+            URL url = getUrlFromClasspathEntry(classLoader, s, "");
+            if (url == null)
+                continue;
+            System.err.println("s: " + s);
+            System.err.println("url: " + url);
+
+            String filename = URLDecoder.decode(url.getFile(), "UTF-8");
+            if (url.getProtocol().equals("jar"))
             {
-                URL url = getUrlFromClasspathEntry(classLoader, s, "");
-                if (url == null)
-                    continue;
-                System.err.println("s: " + s);
-                System.err.println("url: " + url);
+                filename = filename.substring(5, filename.indexOf("!"));
 
-                String filename = URLDecoder.decode(url.getFile(), "UTF-8");
-                if (url.getProtocol().equals("jar"))
+                JarFile jf = new JarFile(filename);
+                Enumeration<JarEntry> entries = jf.entries();
+                while (entries.hasMoreElements())
                 {
-                    filename = filename.substring(5, filename.indexOf("!"));
+                    String imp = getImport(entries.nextElement().getName(), classname);
+                    printPossibleImport(imp, possibleImports);
 
-                    JarFile jf = new JarFile(filename);
-                    Enumeration<JarEntry> entries = jf.entries();
-                    while (entries.hasMoreElements())
-                    {
-                        addToImportMap(entries.nextElement().getName());
-                    }
-                }
-                else
-                {
-                    File folder = new File(filename);
-                    File[] classFiles = getClassFilesNotInJar(folder).toArray(new File[0]);
-                    for (File classFile : classFiles) 
-                    {
-                        addToImportMap(classFile.getAbsolutePath().substring(folder.getAbsolutePath().length()));
-                    }
                 }
             }
-        }
-
-        if (classname != null)
-        {
-            Set<String> possibleImports = importMap.get(classname);
-            if (possibleImports != null) 
+            else
             {
-                printImports(possibleImports);
+                File folder = new File(filename);
+                printImportsNotInJar(folder, folder, classname, possibleImports);
             }
         }
-        else
-        {
-            for (Set<String> imports : importMap.values())
-            {
-                printImports(imports);
-            }
-        }
-        
     }
 
-    private static void printImports(Set<String> imports)
+    private static void printPossibleImport(String fullClassname, Set<String> possibleImports)
     {
-        for (String impClass : imports)
-        {
-            if (!sublimeJavaClassPattern.matcher(impClass).matches())
-            {
-                System.out.println(impClass);
-            }
-        }
+        if (fullClassname != null && possibleImports.add(fullClassname))
+            System.out.println(fullClassname);
     }
 
     private static void completePackage(String packageName) 
@@ -588,7 +559,7 @@ public class SublimeJava
                             for (String pack : packages)
                             {
                                 String classname = getClassname(pack, args[1]);
-                                while (!found && classname.indexOf('.') != -1)
+                                while (!found && classname != null && classname.indexOf('.') != -1)
                                 {
                                     int idx = classname.lastIndexOf('.');
                                     classname = classname.substring(0, idx) + "$" + classname.substring(idx+1);

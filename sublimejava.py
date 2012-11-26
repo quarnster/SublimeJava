@@ -158,9 +158,7 @@ class ImportJavaClassCommand(sublime_plugin.TextCommand):
             if index != -1:
                 self._insert_import(imports[index], edit)
 
-        if len(imports) == 1:
-            do_import(0)
-        elif len(imports) > 1:
+        if len(imports) > 0:
             view.window().show_quick_panel(imports, do_import)
         else:
             sublime.error_message("No classes found to import for name %s" % classname)

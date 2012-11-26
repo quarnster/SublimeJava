@@ -1,5 +1,6 @@
 import os
 import webbrowser
+import sublime
 
 path_to_full = lambda path: '.'.join(path.split('/'))
 remove_dollar = lambda classname: classname.replace('$$', '.')
@@ -29,8 +30,10 @@ class JavaClassOpener(object):
 
         if classname is not None and len(options) == 1:
             do_open(0)
-        else:
+        elif len(options) > 1:
             self.window.show_quick_panel([t[0] for t in options], do_open)
+        else:
+            sublime.message_dialog("No classes could be found. Check your %s project setting." % self.setting_name)
 
     def _scan_dir(self, base, classname_to_find=None):
         return []
