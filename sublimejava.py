@@ -31,8 +31,10 @@ reload(completioncommon)
 import classopener
 reload(classopener)
 
+
 class SublimeJavaDotComplete(completioncommon.CompletionCommonDotComplete):
     pass
+
 
 class SublimeJavaCompletion(completioncommon.CompletionCommon):
     def __init__(self):
@@ -186,6 +188,7 @@ class OpenJavaSourceCommand(sublime_plugin.WindowCommand):
 
     def run(self, under_cursor=False):
         classopener.JavaSourceOpener(comp, self.window.active_view(), under_cursor).show()
+
 
 class OpenJavaDocCommand(sublime_plugin.WindowCommand):
 
