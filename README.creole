@@ -1,5 +1,5 @@
 === Description ===
-A plugin that provides a Java code completion view inside of Sublime Text 2. It also provides import search/insertion/completion and goto source/javadocs.
+A plugin that provides a Java code completion view inside of Sublime Text 2. It also provides import insertion/completion and goto source/javadocs.
 
 === Known issues and feature requests ===
 Please go [[https://github.com/quarnster/SublimeJava/issues?sort=created&direction=desc&state=open|here]] to see the currently known issues and feature request, or to file a new.
@@ -19,9 +19,19 @@ Please go [[https://github.com/quarnster/SublimeJava/issues?sort=created&directi
     ** To update to the latest commit, use this command in the SublimeJava directory:
     ***        git pull && git submodule foreach --recursive git pull origin master
     * You most likely want to configure the "sublimejava_classpath" setting to your own, issue [[https://github.com/quarnster/SublimeJava/issues/23|23]] details how this is done.
+    * Also, you would mostly likely want to configure the "sublimejava_sourcepath" and "sublimejava_docpath"
+    to use source and doc search. NOTE: At present, this does not handle jar files.
 
 === Usage ===
 Once installed it'll try to provide reasonable completion suggestions when you trigger autocompletion. Please note that it accomplishes this with the use of [[http://docs.oracle.com/javase/tutorial/reflect/index.html|reflection]] so it can only complete compiled classes that are in your classpath.
+
+To import a class, type the class name wherever it is that you will be using it. Then, with the cursor on class name, 
+run the "Java: Import Class Under Cursor" command.  If the class is found in the classpath, the possible imports will 
+be presented to you in a quicklist. You can then choose the correct match for your import, and it will be inserted 
+after the final import statement, or, if no imports are found, after the package declaration.  If none of the presented 
+classes are the class that you wanted to import, check your "sublime_classpath" setting.
+
+To go to source or javadocs, you may either look for the source under the cursor (using the "Java: Open Source/Javadoc Under Cursor" command, or simply open up a quicklist and filter through all sources ("Java: Open Source/Javadoc" command).
 
 === License ===
 This plugin is using the zlib license
