@@ -1,10 +1,7 @@
 [
     {
         "caption": "Java: Import Class Under Cursor",
-        "command": "import_java_class",
-        "args": {
-            "under_cursor": true
-        }
+        "command": "import_java_class"
     },
     {
         "caption": "Java: Open Source",

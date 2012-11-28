@@ -282,21 +282,23 @@ public class SublimeJava
         return false;
     }
 
-    private static final String CLASS_NAME_RE = "(?:$|.)?(\\w+).class";
+    private static final String CLASS_FILE_NAME_RE = "(?:$|/)?(\\w+).class";
+    private static final String CLASS_FULL_NAME_IN_PKG_RE = "(\\w+(\\.|$){1})+\\w+";
     private static final String DIGITS_CLASS_NAME_RE = "\\d+";
     private static final String SUBLIME_JAVA_CLASS_RE = "SublimeJava";
 
-    private static Pattern classnamePattern, digitsClassnamePattern, sublimeJavaClassPattern;
+    private static Pattern classFileNamePattern, classFullNameInPackagePattern, digitsClassnamePattern, sublimeJavaClassPattern;
     static 
     {
-        classnamePattern = Pattern.compile(CLASS_NAME_RE);
+        classFileNamePattern = Pattern.compile(CLASS_FILE_NAME_RE);
+        classFullNameInPackagePattern = Pattern.compile(CLASS_FULL_NAME_IN_PKG_RE);
         digitsClassnamePattern = Pattern.compile(DIGITS_CLASS_NAME_RE);
         sublimeJavaClassPattern = Pattern.compile(SUBLIME_JAVA_CLASS_RE);
     }
 
     private static String getImport(String classFileName, String searchClass)
     {   
-        Matcher classnameMatcher = classnamePattern.matcher(classFileName);
+        Matcher classnameMatcher = classFileNamePattern.matcher(classFileName);
         if (classnameMatcher.find())
         {
             String classname = classnameMatcher.group(1);
@@ -308,7 +310,11 @@ public class SublimeJava
                 {
                     fullClassname = fullClassname.substring(1);
                 }
-                return fullClassname;
+                // Only allow class as import if it has a package. Classes in
+                // default package are not allowed to be imported.
+                if (classFullNameInPackagePattern.matcher(fullClassname).matches()){
+                    return fullClassname;
+                }
             }
         }
         return null;
@@ -354,7 +360,7 @@ public class SublimeJava
 
     private static void printImportsNotInJar(File current, File root, String classname, Set<String> possibleImports) 
     {
-        Matcher classnameMatcher = classnamePattern.matcher(current.getName());
+        Matcher classnameMatcher = classFileNamePattern.matcher(current.getName());
         if (current.isFile() && classnameMatcher.matches())
         {
             if (classname == null || classname.equals(classnameMatcher.group(1)))
