@@ -242,18 +242,11 @@ public class SublimeJava
         Package p = Package.getPackage(packageName);
         if (p != null)
             return true;
-        ArrayList<String> paths = new ArrayList<String>();
-        paths.add("java/lang/String.class");
-        for (String s : System.getProperty("java.class.path").split(System.getProperty("path.separator")))
-        {
-            if (!paths.contains(s))
-                paths.add(s);
-        }
 
         packageName = packageName.replace(".", "/");
 
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        for (String s : paths)
+        for (String s : getClasspathEntries())
         {
             URL url = classLoader.getResource(s + "/" + packageName);
             if (url != null)
@@ -289,52 +282,160 @@ public class SublimeJava
         return false;
     }
 
-    private static void completePackage(String packageName)
-        throws IOException
+    private static final String CLASS_FILE_NAME_RE = "(?:$|/)?(\\w+).class";
+    private static final String CLASS_FULL_NAME_IN_PKG_RE = "(\\w+(\\.|$){1})+\\w+";
+    private static final String DIGITS_CLASS_NAME_RE = "\\d+";
+    private static final String SUBLIME_JAVA_CLASS_RE = "SublimeJava";
+
+    private static Pattern classFileNamePattern, classFullNameInPackagePattern, digitsClassnamePattern, sublimeJavaClassPattern;
+    static 
     {
-        ArrayList<String> paths = new ArrayList<String>();
+        classFileNamePattern = Pattern.compile(CLASS_FILE_NAME_RE);
+        classFullNameInPackagePattern = Pattern.compile(CLASS_FULL_NAME_IN_PKG_RE);
+        digitsClassnamePattern = Pattern.compile(DIGITS_CLASS_NAME_RE);
+        sublimeJavaClassPattern = Pattern.compile(SUBLIME_JAVA_CLASS_RE);
+    }
+
+    private static String getImport(String classFileName, String searchClass)
+    {   
+        Matcher classnameMatcher = classFileNamePattern.matcher(classFileName);
+        if (classnameMatcher.find())
+        {
+            String classname = classnameMatcher.group(1);
+            if ((searchClass != null && searchClass.equals(classname)) || 
+                (searchClass == null && !digitsClassnamePattern.matcher(classname).matches()))
+            {
+                String fullClassname = classFileName.replace("/", ".").replace(".class", "");
+                if (fullClassname.startsWith("."))
+                {
+                    fullClassname = fullClassname.substring(1);
+                }
+                // Only allow class as import if it has a package. Classes in
+                // default package are not allowed to be imported.
+                if (classFullNameInPackagePattern.matcher(fullClassname).matches()){
+                    return fullClassname;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static String[] getClasspathEntries() 
+    {
+        Set<String> paths = new HashSet<String>();
         paths.add("java/lang/String.class");
         for (String s : System.getProperty("java.class.path").split(System.getProperty("path.separator")))
         {
-            if (!paths.contains(s))
-                paths.add(s);
+            paths.add(s);
         }
+        return paths.toArray(new String[0]);
+    }
 
-        packageName = packageName.replace(".", "/");
-
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        for (String s : paths)
+    private static URL getUrlFromClasspathEntry(ClassLoader classLoader, String classpathEntry, String packagePath) 
+    {
+        URL url = null;
+        if (classpathEntry.endsWith(".class"))
+            url = classLoader.getResource(classpathEntry);
+        else
         {
-            URL url = null;
-            if (s.endsWith(".class"))
-                url = classLoader.getResource(s);
+            String path = "file://" + new File(classpathEntry).getAbsolutePath();
+            if (path.endsWith(".jar"))
+            {
+                path = "jar:" + path + "!/" + packagePath;
+            }
             else
             {
-                String path = "file://" + new File(s).getAbsolutePath();
-                if (path.endsWith(".jar"))
-                {
-                    path = "jar:" + path + "!/" + packageName;
-                }
-                else
-                {
-                    path += "/" + packageName;
-                }
-                try
-                {
-                    System.err.println("path: " + path);
-                    url = new URL(path);
-                }
-                catch (Exception e)
-                {}
+                path += "/" + packagePath;
             }
+            try
+            {
+                System.err.println("path: " + path);
+                url = new URL(path);
+            }
+            catch (Exception e)
+            {}
+        }
+        return url;
+    }
+
+    private static void printImportsNotInJar(File current, File root, String classname, Set<String> possibleImports) 
+    {
+        Matcher classnameMatcher = classFileNamePattern.matcher(current.getName());
+        if (current.isFile() && classnameMatcher.matches())
+        {
+            if (classname == null || classname.equals(classnameMatcher.group(1)))
+            {
+                String classFileName = current.getAbsolutePath().substring(root.getAbsolutePath().length());
+                printPossibleImport(getImport(classFileName, classname), possibleImports);
+            }
+        }
+        else if (current.isDirectory()) 
+        {
+            for (File file : current.listFiles()) 
+            {
+                printImportsNotInJar(file, root, classname, possibleImports);
+            }
+        }
+    }
+
+    private static void getPossibleImports(String classname) 
+        throws IOException
+    {
+        Set<String> possibleImports = new HashSet<String>();
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        for (String s : getClasspathEntries())
+        {
+            URL url = getUrlFromClasspathEntry(classLoader, s, "");
             if (url == null)
                 continue;
             System.err.println("s: " + s);
-            System.err.println("packagename: " + packageName);
             System.err.println("url: " + url);
 
             String filename = URLDecoder.decode(url.getFile(), "UTF-8");
-            ArrayList<String> packages = new ArrayList<String>();
+            if (url.getProtocol().equals("jar"))
+            {
+                filename = filename.substring(5, filename.indexOf("!"));
+
+                JarFile jf = new JarFile(filename);
+                Enumeration<JarEntry> entries = jf.entries();
+                while (entries.hasMoreElements())
+                {
+                    String imp = getImport(entries.nextElement().getName(), classname);
+                    printPossibleImport(imp, possibleImports);
+
+                }
+            }
+            else
+            {
+                File folder = new File(filename);
+                printImportsNotInJar(folder, folder, classname, possibleImports);
+            }
+        }
+    }
+
+    private static void printPossibleImport(String fullClassname, Set<String> possibleImports)
+    {
+        if (fullClassname != null && possibleImports.add(fullClassname))
+            System.out.println(fullClassname);
+    }
+
+    private static void completePackage(String packageName) 
+        throws IOException
+    {
+        String packagePath = packageName.replace(".", "/");
+
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        for (String s : getClasspathEntries())
+        {
+            URL url = getUrlFromClasspathEntry(classLoader, s, packagePath);
+            if (url == null)
+                continue;
+            System.err.println("s: " + s);
+            System.err.println("packagename: " + packagePath);
+            System.err.println("url: " + url);
+
+            String filename = URLDecoder.decode(url.getFile(), "UTF-8");
+            Set<String> packages = new HashSet<String>();
             if (url.getProtocol().equals("jar"))
             {
                 filename = filename.substring(5, filename.indexOf("!"));
@@ -344,16 +445,15 @@ public class SublimeJava
                 while (entries.hasMoreElements())
                 {
                     String name = entries.nextElement().getName();
-                    if (name.startsWith(packageName))
+                    if (name.startsWith(packagePath))
                     {
-                        name = name.substring(packageName.length()+1);
+                        name = name.substring(packagePath.length()+1);
                         int idx = name.indexOf('/');
                         if (idx != -1)
                         {
                             name = name.substring(0, idx);
-                            if (!packages.contains(name))
+                            if (packages.add(name))
                             {
-                                packages.add(name);
                                 System.out.println(name + "\tpackage" + sep + name);
                             }
                             continue;
@@ -417,6 +517,16 @@ public class SublimeJava
                             System.err.println("quitting upon request");
                             return;
                         }
+                        else if (args[0].equals("-possibleimports"))
+                        {   
+                            String arg = null;
+                            if (args.length > 1)
+                            {
+                                arg = args[1];
+                            }
+                            getPossibleImports(arg);
+                            continue;
+                        }
                         else if (args[0].equals("-findclass"))
                         {
                             String line = null;
@@ -455,7 +565,7 @@ public class SublimeJava
                             for (String pack : packages)
                             {
                                 String classname = getClassname(pack, args[1]);
-                                while (!found && classname.indexOf('.') != -1)
+                                while (!found && classname != null && classname.indexOf('.') != -1)
                                 {
                                     int idx = classname.lastIndexOf('.');
                                     classname = classname.substring(0, idx) + "$" + classname.substring(idx+1);
