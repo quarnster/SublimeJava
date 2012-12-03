@@ -18,6 +18,10 @@
     // ${env:<variable>} tokens,  and then the ${folder:} are replaced,
     "sublimejava_classpath": [],
 
+    "sublimejava_srcpath": [],
+
+    "sublimejava_docpath": [],
+
     "sublimejava_dotcomplete": true,
 
     // When set to true will inhibit the completions suggested
