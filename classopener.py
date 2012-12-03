@@ -2,7 +2,7 @@ import os
 import webbrowser
 import sublime
 
-path_to_full = lambda path: '.'.join(path.split('/'))
+path_to_full = lambda path: '.'.join(path.replace('\\','/').split('/'))
 remove_dollar = lambda classname: classname.replace('$$', '.')
 
 

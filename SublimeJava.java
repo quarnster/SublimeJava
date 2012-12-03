@@ -288,7 +288,7 @@ public class SublimeJava
     private static final String SUBLIME_JAVA_CLASS_RE = "SublimeJava";
 
     private static Pattern classFileNamePattern, classFullNameInPackagePattern, digitsClassnamePattern, sublimeJavaClassPattern;
-    static 
+    static
     {
         classFileNamePattern = Pattern.compile(CLASS_FILE_NAME_RE);
         classFullNameInPackagePattern = Pattern.compile(CLASS_FULL_NAME_IN_PKG_RE);
@@ -297,15 +297,15 @@ public class SublimeJava
     }
 
     private static String getImport(String classFileName, String searchClass)
-    {   
+    {
         Matcher classnameMatcher = classFileNamePattern.matcher(classFileName);
         if (classnameMatcher.find())
         {
             String classname = classnameMatcher.group(1);
-            if ((searchClass != null && searchClass.equals(classname)) || 
+            if ((searchClass != null && searchClass.equals(classname)) ||
                 (searchClass == null && !digitsClassnamePattern.matcher(classname).matches()))
             {
-                String fullClassname = classFileName.replace("/", ".").replace(".class", "");
+                String fullClassname = classFileName.replace("\\","/").replace("/", ".").replace(".class", "");
                 if (fullClassname.startsWith("."))
                 {
                     fullClassname = fullClassname.substring(1);
@@ -320,7 +320,7 @@ public class SublimeJava
         return null;
     }
 
-    private static String[] getClasspathEntries() 
+    private static String[] getClasspathEntries()
     {
         Set<String> paths = new HashSet<String>();
         paths.add("java/lang/String.class");
@@ -331,7 +331,7 @@ public class SublimeJava
         return paths.toArray(new String[0]);
     }
 
-    private static URL getUrlFromClasspathEntry(ClassLoader classLoader, String classpathEntry, String packagePath) 
+    private static URL getUrlFromClasspathEntry(ClassLoader classLoader, String classpathEntry, String packagePath)
     {
         URL url = null;
         if (classpathEntry.endsWith(".class"))
@@ -358,7 +358,7 @@ public class SublimeJava
         return url;
     }
 
-    private static void printImportsNotInJar(File current, File root, String classname, Set<String> possibleImports) 
+    private static void printImportsNotInJar(File current, File root, String classname, Set<String> possibleImports)
     {
         Matcher classnameMatcher = classFileNamePattern.matcher(current.getName());
         if (current.isFile() && classnameMatcher.matches())
@@ -369,16 +369,16 @@ public class SublimeJava
                 printPossibleImport(getImport(classFileName, classname), possibleImports);
             }
         }
-        else if (current.isDirectory()) 
+        else if (current.isDirectory())
         {
-            for (File file : current.listFiles()) 
+            for (File file : current.listFiles())
             {
                 printImportsNotInJar(file, root, classname, possibleImports);
             }
         }
     }
 
-    private static void getPossibleImports(String classname) 
+    private static void getPossibleImports(String classname)
         throws IOException
     {
         Set<String> possibleImports = new HashSet<String>();
@@ -419,7 +419,7 @@ public class SublimeJava
             System.out.println(fullClassname);
     }
 
-    private static void completePackage(String packageName) 
+    private static void completePackage(String packageName)
         throws IOException
     {
         String packagePath = packageName.replace(".", "/");
@@ -518,7 +518,7 @@ public class SublimeJava
                             return;
                         }
                         else if (args[0].equals("-possibleimports"))
-                        {   
+                        {
                             String arg = null;
                             if (args.length > 1)
                             {
