@@ -652,19 +652,19 @@ public class SublimeJava
                 }
                 catch (Error e)
                 {
-                    System.err.println("Error caught: " + e.getMessage());
+                    System.err.println("Error caught: " + e.getClass().getName() + "\n" + e.getMessage());
                     e.printStackTrace(System.err);
                 }
                 catch (Exception e)
                 {
-                    System.err.println("Exception caught: " + e.getMessage());
+                    System.err.println("Exception caught: " + e.getClass().getName() + "\n" + e.getMessage());
                     e.printStackTrace(System.err);
                 }
             }
         }
         catch (Exception e)
         {
-            System.err.println("Error: " + e.getMessage());
+            System.err.println("Error: " + e.getClass().getName() + "\n" + e.getMessage());
             e.printStackTrace(System.err);
         }
     }
