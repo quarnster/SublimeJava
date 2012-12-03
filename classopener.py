@@ -1,7 +1,7 @@
 import os
 import webbrowser
 
-path_to_full = lambda path: '.'.join(path.replace('\\','/').split('/'))
+path_to_full = lambda path: '.'.join(path.replace('\\', '/').split('/'))
 remove_dollar = lambda classname: classname.replace('$$', '.')
 
 
