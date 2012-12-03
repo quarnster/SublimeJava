@@ -243,12 +243,12 @@ public class SublimeJava
         if (p != null)
             return true;
 
-        packageName = packageName.replace(".", "/");
+        packageName = packageName.replace(".", File.pathSeparator);
 
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         for (String s : getClasspathEntries())
         {
-            URL url = classLoader.getResource(s + "/" + packageName);
+            URL url = classLoader.getResource(s + File.pathSeparator + packageName);
             if (url != null)
                 return true;
             else
@@ -275,8 +275,9 @@ public class SublimeJava
             }
             else
             {
-                File folder = new File(filename);
-                return folder.exists();
+                File folder = new File(filename + File.pathSeparator + packageName);
+                if (folder.exists())
+                    return true;
             }
         }
         return false;
