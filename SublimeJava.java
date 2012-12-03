@@ -487,6 +487,39 @@ public class SublimeJava
         }
     }
 
+    private static <T extends Throwable> void reportError(T e)
+    {
+        String type = "Error";
+        if (e instanceof Exception)
+            type = "Exception";
+        String cn = e.getClass().getName();
+        String msg = e.getMessage();
+        if (msg == null)
+            msg = "";
+
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+
+        String stack = sw.toString();
+        if (stack.indexOf(cn) == -1 && msg.indexOf(cn) == -1)
+        {
+            stack = cn + "\n" + stack;
+        }
+        if (stack.indexOf(msg) != -1)
+            msg = "";
+        System.err.println(type + ": " + msg + " " + stack + "\n" + ";;--;;");
+    }
+
+    private static Class<?> loadClass(String name)
+        throws ClassNotFoundException
+    {
+        // See http://stackoverflow.com/questions/4285855/difference-betweeen-loading-a-class-using-classloader-and-class-forname/7099453#7099453
+        // for an explanation of using a class loader vs Class.forName
+        ClassLoader cls = ClassLoader.getSystemClassLoader();
+        return cls.loadClass(name);
+    }
+
     public static void main(String... unusedargs)
     {
         try
@@ -551,7 +584,7 @@ public class SublimeJava
                                 {
                                     String classname = getClassname(pack, args[1]);
                                     System.err.println("Testing for: " + classname);
-                                    Class c = Class.forName(classname);
+                                    Class c = loadClass(classname);
                                     System.out.println("" + c.getName());
                                     found = true;
                                     break;
@@ -573,7 +606,7 @@ public class SublimeJava
                                     try
                                     {
                                         System.err.println("Testing for: " + classname);
-                                        Class c = Class.forName(classname);
+                                        Class c = loadClass(classname);
                                         System.out.println("" + c.getName());
                                         found = true;
                                         break;
@@ -592,7 +625,7 @@ public class SublimeJava
                         }
                         if (args.length < 2)
                             continue;
-                        Class<?> c = Class.forName(args[1]);
+                        Class<?> c = loadClass(args[1]);
                         String filter = "";
                         if (args.length >= 3)
                         {
@@ -652,20 +685,17 @@ public class SublimeJava
                 }
                 catch (Error e)
                 {
-                    System.err.println("Error caught: " + e.getClass().getName() + "\n" + e.getMessage());
-                    e.printStackTrace(System.err);
+                    reportError(e);
                 }
                 catch (Exception e)
                 {
-                    System.err.println("Exception caught: " + e.getClass().getName() + "\n" + e.getMessage());
-                    e.printStackTrace(System.err);
+                    reportError(e);
                 }
             }
         }
         catch (Exception e)
         {
-            System.err.println("Error: " + e.getClass().getName() + "\n" + e.getMessage());
-            e.printStackTrace(System.err);
+            reportError(e);
         }
     }
 }
