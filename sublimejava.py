@@ -163,7 +163,7 @@ class ImportJavaClassCommand(sublime_plugin.TextCommand):
         classname = view.substr(view.word(view.sel()[0].begin()))
 
         if comp.get_class_under_cursor() != classname:
-            sublime.error_message(MSG_ALREADY_IMPORTED % classname)
+            comp.show_error(MSG_ALREADY_IMPORTED % classname)
             return
 
         imports = comp.get_possible_imports(classname)
@@ -175,7 +175,7 @@ class ImportJavaClassCommand(sublime_plugin.TextCommand):
         if len(imports) > 0:
             view.window().show_quick_panel(imports, do_import)
         else:
-            sublime.error_message(MSG_NO_CLASSES_FOUND % classname)
+            comp.show_error(MSG_NO_CLASSES_FOUND % classname)
 
     def _insert_import(self, full_classname, edit):
         insert_point = 0
