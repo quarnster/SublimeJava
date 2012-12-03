@@ -38,9 +38,9 @@ if __name__ == "__main__":
             f = tempfile.NamedTemporaryFile()
             f.write("""{ "name": "%s", "size": %s}""" % (package_name, os.path.getsize("release/%s" % package_name)))
             f.flush()
-            response = get("-X POST -d @%s -u quarnster https://api.github.com/repos/quarnster/SublimeJava/downloads" % f.name)
+            response = json.loads(get("-X POST -d @%s -u quarnster https://api.github.com/repos/quarnster/SublimeJava/downloads" % f.name))
             f.close()
-            args = """
+            args = """\
 -F "key=%s" \
 -F "acl=%s" \
 -F "success_action_status=201" \
