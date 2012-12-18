@@ -203,6 +203,24 @@ class ImportJavaClassCommand(sublime_plugin.TextCommand):
 
         self.view.insert(edit, insert_point, import_statement)
 
+        if comp.get_setting("sublimejava_organize_imports", True):
+            self.view.run_command("organize_java_imports")
+
+
+class OrganizeJavaImportsCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        regions = self.view.find_all(RE_IMPORT, 0)
+
+        if len(regions) > 0:
+            imports = [self.view.substr(region) for region in regions]
+            # TODO pass func to organize as java, 3rd party, project
+            imports.sort()
+
+            a = regions[0].a
+            b = regions[-1].b
+
+            self.view.replace(edit, sublime.Region(a, b), "\n".join(imports))
+
 
 class OpenJavaSourceCommand(sublime_plugin.WindowCommand):
 

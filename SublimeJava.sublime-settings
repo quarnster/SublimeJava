@@ -35,5 +35,8 @@
 
     // Set to true to not display a visual error message box when an
     // error or exception occurs
-    "sublimejava_no_visual_errors": false
+    "sublimejava_no_visual_errors": false,
+
+    // When set to true, import class under cursor will also organize imports
+    "sublimejava_organize_imports": true
 }

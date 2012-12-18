@@ -24,5 +24,9 @@
         "args": {
           "under_cursor": true
         }
+    },
+    {
+        "caption": "Java: Organize Imports",
+        "command": "organize_java_imports"
     }
 ]
