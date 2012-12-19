@@ -154,6 +154,7 @@ in the current package, or is in the default package."
 
 RE_IMPORT = "import( static)? ([\w\.]+)\.([\w]+|\*);"
 RE_PACKAGE = "package ([\w]+.)*\w+;"
+RE_IMPORT_SECTION = "(^import[^;]+;[^\n]*\n)+"
 
 
 class ImportJavaClassCommand(sublime_plugin.TextCommand):
@@ -209,17 +210,15 @@ class ImportJavaClassCommand(sublime_plugin.TextCommand):
 
 class OrganizeJavaImportsCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        regions = self.view.find_all(RE_IMPORT, 0)
-
-        if len(regions) > 0:
-            imports = [self.view.substr(region) for region in regions]
+        sections = self.view.find_all(RE_IMPORT_SECTION, 0)
+        section_imports = [self.view.substr(section) for section in sections]
+        for i in range(len(sections)):
             # TODO pass func to organize as java, 3rd party, project
+            imports = section_imports[i][:-1].split("\n")
             imports.sort()
+            imports = "\n".join(imports) + "\n"
 
-            a = regions[0].a
-            b = regions[-1].b
-
-            self.view.replace(edit, sublime.Region(a, b), "\n".join(imports))
+            self.view.replace(edit, sections[i], imports)
 
 
 class OpenJavaSourceCommand(sublime_plugin.WindowCommand):
