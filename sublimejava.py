@@ -24,6 +24,7 @@ import sublime
 import sublime_plugin
 import os
 import re
+import bisect
 
 from sublimecompletioncommon import completioncommon
 reload(completioncommon)
@@ -183,10 +184,14 @@ class ImportJavaClassCommand(sublime_plugin.TextCommand):
         newlines_prepend = 0
         newlines_append = 1
 
+        import_classname = full_classname.replace("$", ".")
+        import_statement = "import %s;" % (import_classname)
         all_imports_region = self.view.find_all(RE_IMPORT)
 
         if len(all_imports_region) > 0:
-            insert_point = all_imports_region[-1].b
+            all_imports = sorted([(region, self.view.substr(region)) for region in all_imports_region], key=lambda a: a[1])
+            only_imports = [a[1] for a in all_imports]
+            insert_point = all_imports[bisect.bisect_left(only_imports, import_statement)][0].b
             newlines_prepend = 1
             newlines_append = 0
         else:
@@ -197,9 +202,8 @@ class ImportJavaClassCommand(sublime_plugin.TextCommand):
                 newlines_prepend = 2
                 newlines_append = 0
 
-        import_classname = full_classname.replace("$", ".")
-        import_statement = "%simport %s;%s" % ("\n" * newlines_prepend,
-                                               import_classname,
+        import_statement = "%s%s%s" % ("\n" * newlines_prepend,
+                                               import_statement,
                                                "\n" * newlines_append)
 
         self.view.insert(edit, insert_point, import_statement)
