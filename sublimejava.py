@@ -155,7 +155,7 @@ in the current package, or is in the default package."
 
 RE_IMPORT = "import( static)? ([\w\.]+)\.([\w]+|\*);"
 RE_PACKAGE = "package ([\w]+.)*\w+;"
-RE_IMPORT_SECTION = "(^import[^;]+;[^\n]*\n)+"
+RE_IMPORT_SECTION = "(^import[^;\n]+;[^\n]*\n)+"
 
 
 class ImportJavaClassCommand(sublime_plugin.TextCommand):
