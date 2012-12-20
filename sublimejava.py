@@ -191,9 +191,28 @@ class ImportJavaClassCommand(sublime_plugin.TextCommand):
         if len(all_imports_region) > 0:
             all_imports = sorted([(region, self.view.substr(region)) for region in all_imports_region], key=lambda a: a[1])
             only_imports = [a[1] for a in all_imports]
-            insert_point = all_imports[bisect.bisect_left(only_imports, import_statement)][0].b
-            newlines_prepend = 1
-            newlines_append = 0
+
+            # The following logic is used to find the right spot to insert the import statement at if there are multiple
+            # separate import groups. See discussion in #62
+            pos = bisect.bisect_left(only_imports, import_statement)
+
+            def score_string(a, b):
+                score = 0
+                for i in range(min(len(a), len(b))):
+                    score += a[i] == b[i]
+                return score
+
+            if pos == len(all_imports) or (pos > 0 and \
+                    score_string(import_statement, all_imports[pos-1][1]) > score_string(import_statement, all_imports[pos][1])):
+                # Append
+                insert_point = all_imports[pos-1][0].b
+                newlines_prepend = 1
+                newlines_append = 0
+            else:
+                # Insert
+                insert_point = all_imports[pos][0].a
+                newlines_prepend = 0
+                newlines_append = 1
         else:
             package_declaration_region = self.view.find(RE_PACKAGE, 0)
 
