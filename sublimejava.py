@@ -254,6 +254,28 @@ class OrganizeJavaImportsCommand(sublime_plugin.TextCommand):
             self.view.replace(edit, sections[i], imports)
 
 
+class InsertJavaPackageCommand(sublime_plugin.TextCommand):
+
+    def run(self, edit):
+        if self.view.find(RE_PACKAGE, 0):
+            comp.show_error("Package already declared.")
+            return
+
+        file_name = self.view.file_name()
+        for path in comp.get_setting("sublimejava_srcpath", []):
+            path = os.path.abspath(
+                comp.expand_path(path, self.view.window())
+            )
+            if (os.path.commonprefix([path, file_name]) == path):
+                pkg_path = os.path.dirname(os.path.relpath(file_name, path))
+                self.view.insert(
+                    edit,
+                    0,
+                    "package %s;\n" % pkg_path.replace(os.sep, ".")
+                )
+                break
+
+
 class OpenJavaSourceCommand(sublime_plugin.WindowCommand):
 
     def run(self, under_cursor=False):
