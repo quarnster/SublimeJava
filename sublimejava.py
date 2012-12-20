@@ -204,12 +204,12 @@ class ImportJavaClassCommand(sublime_plugin.TextCommand):
 
             if pos == len(all_imports) or (pos > 0 and \
                     score_string(import_statement, all_imports[pos-1][1]) > score_string(import_statement, all_imports[pos][1])):
-                # Append
+                # Insert after
                 insert_point = all_imports[pos-1][0].b
                 newlines_prepend = 1
                 newlines_append = 0
             else:
-                # Insert
+                # Insert before
                 insert_point = all_imports[pos][0].a
                 newlines_prepend = 0
                 newlines_append = 1
