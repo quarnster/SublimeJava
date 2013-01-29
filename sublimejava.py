@@ -25,12 +25,13 @@ import sublime_plugin
 import os
 import re
 import bisect
+import imp
 
-from sublimecompletioncommon import completioncommon
-reload(completioncommon)
+completioncommon = imp.load_source("completioncommon", os.path.join(os.path.dirname(os.path.abspath(__file__)), "sublimecompletioncommon/completioncommon.py"))
+imp.reload(completioncommon)
 
-import classopener
-reload(classopener)
+import SublimeJava.classopener as classopener
+imp.reload(classopener)
 
 
 class SublimeJavaDotComplete(completioncommon.CompletionCommonDotComplete):
@@ -53,7 +54,7 @@ class SublimeJavaCompletion(completioncommon.CompletionCommon):
 
     def show_error(self, msg):
         if self.get_setting("sublimejava_no_visual_errors", False):
-            print msg
+            print(msg)
         else:
             sublime.error_message(msg + "\n\nDisable visual error message dialogues with setting:\nsublimejava_no_visual_errors: true")
 
