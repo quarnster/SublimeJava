@@ -51,7 +51,7 @@ if __name__ == "__main__":
 -F "Content-Type=%s" \
 -F "file=@release/%s" \
 https://github.s3.amazonaws.com/""" % (response["path"], response["acl"], response["name"], response["accesskeyid"], response["policy"], response["signature"], response["mime_type"], package_name)
-            print get(args)
+            print(get(args))
 
 
 
