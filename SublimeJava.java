@@ -283,8 +283,8 @@ public class SublimeJava
         return false;
     }
 
-    private static final String CLASS_FILE_NAME_RE = "(?:$|/)?(\\w+).class";
-    private static final String CLASS_FULL_NAME_IN_PKG_RE = "(\\w+(\\.|$){1})+\\w+";
+    private static final String CLASS_FILE_NAME_RE = "(?:\\$|/)?(\\w+).class";
+    private static final String CLASS_FULL_NAME_IN_PKG_RE = "(\\w+(\\.|\\$){1})+\\w+";
     private static final String DIGITS_CLASS_NAME_RE = "\\d+";
     private static final String SUBLIME_JAVA_CLASS_RE = "SublimeJava";
 
