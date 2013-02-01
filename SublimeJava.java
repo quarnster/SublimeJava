@@ -511,12 +511,52 @@ public class SublimeJava
         System.err.println(type + ": " + msg + " " + stack + "\n" + ";;--;;");
     }
 
+    private static class MyClassLoader
+    extends ClassLoader
+    {
+        MyClassLoader()
+        {
+            super(MyClassLoader.class.getClassLoader());
+        }
+        public Class<?> loadClass(String name)
+            throws ClassNotFoundException
+        {
+            // First we use the superclass to get a hold of the class.
+            Class c = super.loadClass(name);
+            DataInputStream s = null;
+            try
+            {
+                // However, as the default class loader does not reload classes that have changed
+                // we use the handle to the class to try and get it's actual .class definition
+                // which we then define in THIS ClassLoader subclass. Hence: dynamic class reloading :)
+                InputStream s1 = c.getResourceAsStream(c.getName() + ".class");
+                if (s1 == null)
+                    return c;
+                s = new DataInputStream(s1);
+                int len = s.available();
+                byte[] data = new byte[len];
+                s.readFully(data);
+                return defineClass(name, data, 0, len);
+            }
+            catch (Exception e)
+            {
+                reportError(e);
+            }
+            finally
+            {
+                if (s != null)
+                    try { s.close(); } catch (Exception e) {}
+            }
+            throw new ClassNotFoundException();
+        }
+    }
+
     private static Class<?> loadClass(String name)
         throws ClassNotFoundException
     {
         // See http://stackoverflow.com/questions/4285855/difference-betweeen-loading-a-class-using-classloader-and-class-forname/7099453#7099453
         // for an explanation of using a class loader vs Class.forName
-        ClassLoader cls = ClassLoader.getSystemClassLoader();
+        ClassLoader cls = new MyClassLoader();
         return cls.loadClass(name);
     }
 
