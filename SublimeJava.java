@@ -530,15 +530,15 @@ public class SublimeJava
                 // we use the handle to the class to try and get it's actual .class definition
                 // which we then define in THIS ClassLoader subclass. Hence: dynamic class reloading :)
                 String path = ClassLoader.getSystemResource(c.getName().replaceAll("\\.", String.valueOf(File.separatorChar)) + ".class").getFile();
-								File f = new File(path);
-								if (!f.exists()) {
-									return c;
-								}
-								int len = (int) f.length();
-								byte[] data = new byte[len];
-								s = new DataInputStream(new FileInputStream(f));
-								s.readFully(data);
-								return defineClass(name, data, 0, len);
+                File f = new File(path);
+                if (!f.exists()) {
+                    return c;
+                }
+                int len = (int) f.length();
+                byte[] data = new byte[len];
+                s = new DataInputStream(new FileInputStream(f));
+                s.readFully(data);
+                return defineClass(name, data, 0, len);
             }
             catch (Exception e)
             {
