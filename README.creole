@@ -18,6 +18,8 @@ Please go [[https://github.com/quarnster/SublimeJava/issues?sort=created&directi
     ***        git clone --recursive https://github.com/quarnster/SublimeJava SublimeJava
     ** To update to the latest commit, use this command in the SublimeJava directory:
     ***        git pull && git submodule foreach --recursive git pull origin master
+    ** Once you have the sources pulled, you'll need to compile the SublimeJava java source file:
+    ***        javac SublimeJava.java
     * You most likely want to configure the "sublimejava_classpath" setting to your own, issue [[https://github.com/quarnster/SublimeJava/issues/23|23]] details how this is done.
     * Also, you would mostly likely want to configure the "sublimejava_srcpath" and "sublimejava_docpath"
     to use source and doc search. NOTE: At present, this does not handle jar files.
