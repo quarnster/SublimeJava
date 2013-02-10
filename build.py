@@ -14,8 +14,7 @@ if __name__ == "__main__":
         assert(os.system(cmd) == 0)
 
     version = json.load(open('package.json'))['packages'][0]['platforms']['*'][0]['version']
-    if not os.access("SublimeJava.class", os.R_OK) or os.path.getmtime("SublimeJava.java") > os.path.getmtime("SublimeJava.class"):
-        run("javac -source 1.5 -target 1.5 SublimeJava.java")
+    run("javac -source 1.5 -target 1.5 SublimeJava.java")
 
     package_name = "SublimeJava-%s.sublime-package" % version
 
