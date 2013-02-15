@@ -529,7 +529,7 @@ public class SublimeJava
                 // However, as the default class loader does not reload classes that have changed
                 // we use the handle to the class to try and get it's actual .class definition
                 // which we then define in THIS ClassLoader subclass. Hence: dynamic class reloading :)
-                String path = ClassLoader.getSystemResource(c.getName().replaceAll("\\.", String.valueOf(File.separatorChar)) + ".class").getFile();
+                String path = ClassLoader.getSystemResource(c.getName().replaceAll("\\.", "/") + ".class").getFile();
                 File f = new File(path);
                 if (!f.exists()) {
                     return c;
