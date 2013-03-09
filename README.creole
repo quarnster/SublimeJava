@@ -1,3 +1,8 @@
+= Plugin discontinued =
+**If something is broken, submit a pull request and we'll consider merging it.
+
+** Eventually it will be replaced by https://github.com/quarnster/completion. If you'd like to see that project move along quicker, submit a pull request and/or participate in its discussions.
+
 === Description ===
 A plugin that provides a Java code completion view inside of Sublime Text 2. It also provides import insertion/completion and goto source/javadocs.
 
