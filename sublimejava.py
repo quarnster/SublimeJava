@@ -67,7 +67,7 @@ class SublimeJavaCompletion(completioncommon.CompletionCommon):
             sublime.error_message(msg + "\n\nDisable visual error message dialogues with setting:\nsublimejava_no_visual_errors: true")
 
     def get_packages(self, data, thispackage, type):
-        packages = re.findall(r"(?:^|\n)[ \t]*import[ \t]+(.*);", data)
+        packages = re.findall(r"(?:^|\n)[ \t]*import[ \t]+(.*?)[ \t]*;", data)
         packages.append("java.lang.*")
         packages.append("")  # for int, boolean, etc
         for package in packages:
