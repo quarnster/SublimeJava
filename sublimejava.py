@@ -225,10 +225,12 @@ class ImportJavaClassCommand(sublime_plugin.TextCommand):
         view = self.view
         classname = view.substr(view.word(view.sel()[0].begin()))
 
+        """
         if comp.get_class_under_cursor():
             comp.show_error(MSG_ALREADY_IMPORTED % classname)
             return
-
+        """
+        
         imports = comp.get_possible_imports(classname)
 
         def do_import(index):
